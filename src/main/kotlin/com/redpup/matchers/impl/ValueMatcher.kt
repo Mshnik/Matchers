@@ -7,21 +7,21 @@ import com.redpup.matchers.proto.ValueMatcher.ValueCase
 /** The implementation for [com.redpup.matchers.proto.ValueMatcher]. */
 sealed class ValueMatcher<in T : Any>(
   expectedClass: kotlin.reflect.KClass<T>,
-  matcher: Matcher,
-) : KMatcher<T>(expectedClass, matcher) {
+  proto: Matcher,
+) : KMatcher<T>(expectedClass, proto) {
   companion object {
-    /** Compiles [matcher] into a [ValueMatcher]. */
-    fun compile(matcher: Matcher): ValueMatcher<*> {
-      check(matcher.hasValueMatcher())
-      { "Expected value matcher, found $matcher" }
-      return when (matcher.valueMatcher.valueCase) {
-        ValueCase.BOOL_VALUE -> BooleanValueMatcher(matcher)
-        ValueCase.INT32_VALUE -> Int32ValueMatcher(matcher)
-        ValueCase.INT64_VALUE -> Int64ValueMatcher(matcher)
-        ValueCase.FLOAT_VALUE -> FloatValueMatcher(matcher)
-        ValueCase.DOUBLE_VALUE -> DoubleValueMatcher(matcher)
-        ValueCase.STRING_VALUE -> StringValueMatcher(matcher)
-        ValueCase.VALUE_NOT_SET -> throw IllegalArgumentException("ValueMatcher has no value set: $matcher")
+    /** Compiles [proto] into a [ValueMatcher]. */
+    fun compile(proto: Matcher): ValueMatcher<*> {
+      check(proto.hasValueMatcher())
+      { "Expected value proto, found $proto" }
+      return when (proto.valueMatcher.valueCase) {
+        ValueCase.BOOL_VALUE -> BooleanValueMatcher(proto)
+        ValueCase.INT32_VALUE -> Int32ValueMatcher(proto)
+        ValueCase.INT64_VALUE -> Int64ValueMatcher(proto)
+        ValueCase.FLOAT_VALUE -> FloatValueMatcher(proto)
+        ValueCase.DOUBLE_VALUE -> DoubleValueMatcher(proto)
+        ValueCase.STRING_VALUE -> StringValueMatcher(proto)
+        ValueCase.VALUE_NOT_SET -> throw IllegalArgumentException("ValueMatcher has no value set: $proto")
         null -> throw NullPointerException("ValueCase is null")
       }
     }
@@ -29,37 +29,37 @@ sealed class ValueMatcher<in T : Any>(
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueMatcher] on Booleans. */
-private class BooleanValueMatcher(private val matcher: Matcher) :
-  ValueMatcher<Boolean>(Boolean::class, matcher) {
-  override fun matchTyped(value: Boolean): Boolean = matcher.valueMatcher.boolValue == value
+private class BooleanValueMatcher(proto: Matcher) :
+  ValueMatcher<Boolean>(Boolean::class, proto) {
+  override fun matchTyped(value: Boolean): Boolean = proto.valueMatcher.boolValue == value
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueMatcher] on Ints. */
-private class Int32ValueMatcher(private val matcher: Matcher) :
-  ValueMatcher<Int>(Int::class, matcher) {
-  override fun matchTyped(value: Int): Boolean = matcher.valueMatcher.int32Value == value
+private class Int32ValueMatcher(proto: Matcher) :
+  ValueMatcher<Int>(Int::class, proto) {
+  override fun matchTyped(value: Int): Boolean = proto.valueMatcher.int32Value == value
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueMatcher] on Longs. */
-private class Int64ValueMatcher(private val matcher: Matcher) :
-  ValueMatcher<Long>(Long::class, matcher) {
-  override fun matchTyped(value: Long): Boolean = matcher.valueMatcher.int64Value == value
+private class Int64ValueMatcher(proto: Matcher) :
+  ValueMatcher<Long>(Long::class, proto) {
+  override fun matchTyped(value: Long): Boolean = proto.valueMatcher.int64Value == value
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueMatcher] on Floats. */
-private class FloatValueMatcher(private val matcher: Matcher) :
-  ValueMatcher<Float>(Float::class, matcher) {
-  override fun matchTyped(value: Float): Boolean = matcher.valueMatcher.floatValue == value
+private class FloatValueMatcher(proto: Matcher) :
+  ValueMatcher<Float>(Float::class, proto) {
+  override fun matchTyped(value: Float): Boolean = proto.valueMatcher.floatValue == value
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueMatcher] on Doubles. */
-private class DoubleValueMatcher(private val matcher: Matcher) :
-  ValueMatcher<Double>(Double::class, matcher) {
-  override fun matchTyped(value: Double): Boolean = matcher.valueMatcher.doubleValue == value
+private class DoubleValueMatcher(proto: Matcher) :
+  ValueMatcher<Double>(Double::class, proto) {
+  override fun matchTyped(value: Double): Boolean = proto.valueMatcher.doubleValue == value
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueMatcher] on Strings. */
-private class StringValueMatcher(private val matcher: Matcher) :
-  ValueMatcher<String>(String::class, matcher) {
-  override fun matchTyped(value: String): Boolean = matcher.valueMatcher.stringValue == value
+private class StringValueMatcher(proto: Matcher) :
+  ValueMatcher<String>(String::class, proto) {
+  override fun matchTyped(value: String): Boolean = proto.valueMatcher.stringValue == value
 }

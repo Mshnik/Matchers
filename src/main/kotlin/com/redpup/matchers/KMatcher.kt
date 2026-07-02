@@ -1,5 +1,8 @@
 package com.redpup.com.redpup.matchers
 
+import com.redpup.com.redpup.matchers.impl.CombiningMatcher
+import com.redpup.com.redpup.matchers.impl.ConstantMatcher
+import com.redpup.com.redpup.matchers.impl.ValueMatcher
 import com.redpup.matchers.proto.Matcher
 import kotlin.reflect.KClass
 
@@ -30,8 +33,14 @@ abstract class KMatcher<in T : Any>(
     return matchTyped(value as T)
   }
 
+  /** Safely tests an arbitrary [value]. */
+  operator fun invoke(value: Any): Boolean = match(value)
+
   /** Tests a [value] of known type [T]. */
   abstract fun matchTyped(value: T): Boolean
+
+  /** Tests a [value] of known type [T]. */
+  operator fun invoke(value: T): Boolean = matchTyped(value)
 
   /** Safely narrows an unknown/star-projected matcher to a specific expected type. */
   inline fun <reified R : Any> KMatcher<*>.typed(): KMatcher<R> {
@@ -49,6 +58,17 @@ abstract class KMatcher<in T : Any>(
     return object : KMatcher<T2>(T2::class) {
       override fun matchTyped(value: T2): Boolean = this@KMatcher.matchTyped(transform(value))
       override fun buildProto(): Matcher = this@KMatcher.proto
+    }
+  }
+
+  companion object {
+    /** Compiles [matcher] into a [KMatcher]. */
+    fun compile(matcher: Matcher): KMatcher<*> = when (matcher.matcherCase) {
+      Matcher.MatcherCase.CONSTANT_MATCHER -> ConstantMatcher(matcher)
+      Matcher.MatcherCase.VALUE_MATCHER -> ValueMatcher.compile(matcher)
+      Matcher.MatcherCase.COMBININGMATCHER -> CombiningMatcher(matcher)
+      Matcher.MatcherCase.MATCHER_NOT_SET -> throw IllegalArgumentException("Unsupported matcher: $matcher")
+      null -> throw NullPointerException()
     }
   }
 }

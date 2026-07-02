@@ -12,6 +12,8 @@ message Matcher {
     // Constant matcher - all matches return the set value.
     bool constant_matcher = 1;
     ValueMatcher value_matcher = 2;
+
+    CombiningMatcher combiningMatcher = 10;
   }
 }
 
@@ -25,4 +27,19 @@ message ValueMatcher {
     double double_value = 5;
     string string_value = 6;
   }
+}
+
+// A Matcher wrapping a collection of other matchers and combining their results.
+message CombiningMatcher {
+  // Means of combining matcher results.
+  enum Combine {
+    COMBINE_UNSET = 0;
+    COMBINE_ANY = 1;
+    COMBINE_ALL = 2;
+    COMBINE_NONE = 3;
+  }
+  Combine combine = 1;
+
+  // The matchers inside this Combining Matcher.
+  repeated Matcher matchers = 2;
 }
