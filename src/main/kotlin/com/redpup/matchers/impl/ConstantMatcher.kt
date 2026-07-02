@@ -1,6 +1,6 @@
-package com.redpup.com.redpup.matchers.impl
+package com.redpup.matchers.impl
 
-import com.redpup.com.redpup.matchers.KMatcher
+import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 
 /** The compiled implementation of [Matcher.getConstantMatcher]. */

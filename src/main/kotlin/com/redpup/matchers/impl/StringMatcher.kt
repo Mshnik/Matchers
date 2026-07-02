@@ -1,6 +1,6 @@
-package com.redpup.com.redpup.matchers.impl
+package com.redpup.matchers.impl
 
-import com.redpup.com.redpup.matchers.KMatcher
+import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.StringMatcher.CaseSensitivity
 import com.redpup.matchers.proto.StringMatcher.MatcherCase

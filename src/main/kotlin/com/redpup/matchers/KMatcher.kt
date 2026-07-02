@@ -1,6 +1,6 @@
-package com.redpup.com.redpup.matchers
+package com.redpup.matchers
 
-import com.redpup.com.redpup.matchers.impl.*
+import com.redpup.matchers.impl.*
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.Matcher.MatcherCase
 import kotlin.reflect.KClass
@@ -38,20 +38,6 @@ abstract class KMatcher<in T : Any>(
   /** Tests a [value] of known type [T]. */
   abstract fun matchTyped(value: T): Boolean
 
-  /** Tests a [value] of known type [T]. */
-  operator fun invoke(value: T): Boolean = matchTyped(value)
-
-  /** Safely narrows an unknown/star-projected matcher to a specific expected type. */
-  inline fun <reified R : Any> KMatcher<*>.typed(): KMatcher<R> {
-    check(this.expectedClass == R::class) {
-      "Type mismatch: Expected Matcher<${R::class.simpleName}>," +
-        " but got Matcher<${this.expectedClass.simpleName}>"
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    return this as KMatcher<R>
-  }
-
   /** Transforms this Matcher by wrapping with [transform]. */
   inline fun <reified T2 : Any> transform(crossinline transform: (T2) -> T): KMatcher<T2> {
     return object : KMatcher<T2>(T2::class) {
@@ -70,6 +56,17 @@ abstract class KMatcher<in T : Any>(
       MatcherCase.COMBININGMATCHER -> CombiningMatcher(matcher)
       MatcherCase.MATCHER_NOT_SET -> throw IllegalArgumentException("Unsupported matcher: $matcher")
       null -> throw NullPointerException()
+    }
+
+    /** Safely narrows an unknown/star-projected matcher to a specific expected type. */
+    inline fun <reified R : Any> KMatcher<*>.typed(): KMatcher<R> {
+      check(this.expectedClass == R::class) {
+        "Type mismatch: Expected Matcher<${R::class.simpleName}>," +
+          " but got Matcher<${this.expectedClass.simpleName}>"
+      }
+
+      @Suppress("UNCHECKED_CAST")
+      return this as KMatcher<R>
     }
   }
 }

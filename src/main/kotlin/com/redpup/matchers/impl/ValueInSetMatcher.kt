@@ -1,7 +1,7 @@
-package com.redpup.com.redpup.matchers.impl
+package com.redpup.matchers.impl
 
 import com.google.protobuf.ProtocolMessageEnum
-import com.redpup.com.redpup.matchers.KMatcher
+import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.ValueInSetMatcher.ValuesCase
 
@@ -22,7 +22,7 @@ sealed class ValueInSetMatcher<in T : Any>(
         ValuesCase.DOUBLE_VALUES -> DoubleValueInSetMatcher(proto)
         ValuesCase.STRING_VALUES -> StringValueInSetMatcher(proto)
         ValuesCase.VALUES_NOT_SET -> throw IllegalArgumentException("ValueInSetMatcher has no value set: $proto")
-        ValuesCase.ENUM_VALUES -> Int32ValueInSetMatcher(proto).transform<ProtocolMessageEnum> { it.number }
+        ValuesCase.ENUM_VALUES -> EnumValueInSetMatcher(proto).transform<ProtocolMessageEnum> { it.number }
         null -> throw NullPointerException("ValuesCase is null")
       }
     }
@@ -65,4 +65,11 @@ private class StringValueInSetMatcher(proto: Matcher) :
   private val set: Set<String> = proto.valueInSetMatcher.stringValues.valuesList.toSet()
 
   override fun matchTyped(value: String): Boolean = set.contains(value)
+}
+
+/** The implementation for [com.redpup.matchers.proto.ValueInSetMatcher] on Enums. */
+private class EnumValueInSetMatcher(proto: Matcher) : ValueInSetMatcher<Int>(Int::class, proto) {
+  private val set: Set<Int> = proto.valueInSetMatcher.enumValues.valuesList.toSet()
+
+  override fun matchTyped(value: Int): Boolean = set.contains(value)
 }

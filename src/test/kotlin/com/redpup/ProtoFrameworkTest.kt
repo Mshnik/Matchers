@@ -8,7 +8,7 @@ import kotlin.test.Test
 class ProtoFrameworkTest {
   @Test
   fun protoFrameworkRuns() {
-    val message = testMessage { value = 123 }
-    assertThat(message.value).isEqualTo(123)
+    val message = testMessage { int32Value = 123 }
+    assertThat(message.int32Value).isEqualTo(123)
   }
 }
