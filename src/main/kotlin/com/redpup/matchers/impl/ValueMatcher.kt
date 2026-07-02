@@ -12,8 +12,8 @@ sealed class ValueMatcher<in T : Any>(
   companion object {
     /** Compiles [proto] into a [ValueMatcher]. */
     fun compile(proto: Matcher): ValueMatcher<*> {
-      check(proto.hasValueMatcher())
-      { "Expected value proto, found $proto" }
+      check(proto.hasValueMatcher()) { "Expected value proto, found $proto" }
+
       return when (proto.valueMatcher.valueCase) {
         ValueCase.BOOL_VALUE -> BooleanValueMatcher(proto)
         ValueCase.INT32_VALUE -> Int32ValueMatcher(proto)

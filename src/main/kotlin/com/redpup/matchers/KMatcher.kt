@@ -2,6 +2,7 @@ package com.redpup.com.redpup.matchers
 
 import com.redpup.com.redpup.matchers.impl.CombiningMatcher
 import com.redpup.com.redpup.matchers.impl.ConstantMatcher
+import com.redpup.com.redpup.matchers.impl.ValueInSetMatcher
 import com.redpup.com.redpup.matchers.impl.ValueMatcher
 import com.redpup.matchers.proto.Matcher
 import kotlin.reflect.KClass
@@ -66,6 +67,7 @@ abstract class KMatcher<in T : Any>(
     fun compile(matcher: Matcher): KMatcher<*> = when (matcher.matcherCase) {
       Matcher.MatcherCase.CONSTANT_MATCHER -> ConstantMatcher(matcher)
       Matcher.MatcherCase.VALUE_MATCHER -> ValueMatcher.compile(matcher)
+      Matcher.MatcherCase.VALUE_IN_SET_MATCHER -> ValueInSetMatcher.compile(matcher)
       Matcher.MatcherCase.COMBININGMATCHER -> CombiningMatcher(matcher)
       Matcher.MatcherCase.MATCHER_NOT_SET -> throw IllegalArgumentException("Unsupported matcher: $matcher")
       null -> throw NullPointerException()

@@ -9,9 +9,9 @@ option java_package = "com.redpup.matchers.proto";
 // to the matcher framework.
 message Matcher {
   oneof matcher {
-    // Constant matcher - all matches return the set value.
     bool constant_matcher = 1;
     ValueMatcher value_matcher = 2;
+    ValueInSetMatcher value_in_set_matcher = 3;
 
     CombiningMatcher combiningMatcher = 10;
   }
@@ -26,6 +26,24 @@ message ValueMatcher {
     float float_value = 4;
     double double_value = 5;
     string string_value = 6;
+  }
+}
+
+// A Matcher wrapping a set of values of a given type. The matcher matches
+// any value in the set.
+message ValueInSetMatcher {
+  message Int32ValueSet {repeated int32 values = 1 [packed = true];}
+  message Int64ValueSet {repeated int64 values = 1 [packed = true];}
+  message FloatValueSet {repeated float values = 1 [packed = true];}
+  message DoubleValueSet {repeated double values = 1 [packed = true];}
+  message StringValueSet {repeated string values = 1;}
+
+  oneof values {
+    Int32ValueSet int32_values = 1;
+    Int64ValueSet int64_values = 2;
+    FloatValueSet float_values = 3;
+    DoubleValueSet double_values = 4;
+    StringValueSet string_values = 5;
   }
 }
 
