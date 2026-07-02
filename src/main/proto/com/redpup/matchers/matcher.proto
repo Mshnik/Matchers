@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package com.redpup.matchers;
+
+option java_multiple_files = true;
+option java_package = "com.redpup.matchers.proto";
+
+// Top level matcher message and the main entry point
+// to the matcher framework.
+message Matcher {
+  oneof matcher {
+    // Constant matcher - all matches return the set value.
+    bool constant_matcher = 1;
+    ValueMatcher value_matcher = 2;
+  }
+}
+
+// A matcher that matches an exact value.
+message ValueMatcher {
+  oneof value {
+    bool bool_value = 1;
+    int32 int32_value = 2;
+    int64 int64_value = 3;
+    float float_value = 4;
+    double double_value = 5;
+    string string_value = 6;
+  }
+}
