@@ -1,5 +1,6 @@
 package com.redpup.com.redpup.matchers.impl
 
+import com.google.protobuf.ProtocolMessageEnum
 import com.redpup.com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.ValueMatcher.ValueCase
@@ -11,7 +12,7 @@ sealed class ValueMatcher<in T : Any>(
 ) : KMatcher<T>(expectedClass, proto) {
   companion object {
     /** Compiles [proto] into a [ValueMatcher]. */
-    fun compile(proto: Matcher): ValueMatcher<*> {
+    fun compile(proto: Matcher): KMatcher<*> {
       check(proto.hasValueMatcher()) { "Expected value proto, found $proto" }
 
       return when (proto.valueMatcher.valueCase) {
@@ -21,6 +22,7 @@ sealed class ValueMatcher<in T : Any>(
         ValueCase.FLOAT_VALUE -> FloatValueMatcher(proto)
         ValueCase.DOUBLE_VALUE -> DoubleValueMatcher(proto)
         ValueCase.STRING_VALUE -> StringValueMatcher(proto)
+        ValueCase.ENUM_VALUE -> Int32ValueMatcher(proto).transform<ProtocolMessageEnum> { it.number }
         ValueCase.VALUE_NOT_SET -> throw IllegalArgumentException("ValueMatcher has no value set: $proto")
         null -> throw NullPointerException("ValueCase is null")
       }

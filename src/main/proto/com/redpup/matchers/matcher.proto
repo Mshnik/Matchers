@@ -27,6 +27,7 @@ message ValueMatcher {
     float float_value = 4;
     double double_value = 5;
     string string_value = 6;
+    int32 enum_value = 7;
   }
 }
 
@@ -45,6 +46,7 @@ message ValueInSetMatcher {
     FloatValueSet float_values = 3;
     DoubleValueSet double_values = 4;
     StringValueSet string_values = 5;
+    Int32ValueSet enum_values = 6;
   }
 }
 
