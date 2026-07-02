@@ -1,10 +1,8 @@
 package com.redpup.com.redpup.matchers
 
-import com.redpup.com.redpup.matchers.impl.CombiningMatcher
-import com.redpup.com.redpup.matchers.impl.ConstantMatcher
-import com.redpup.com.redpup.matchers.impl.ValueInSetMatcher
-import com.redpup.com.redpup.matchers.impl.ValueMatcher
+import com.redpup.com.redpup.matchers.impl.*
 import com.redpup.matchers.proto.Matcher
+import com.redpup.matchers.proto.Matcher.MatcherCase
 import kotlin.reflect.KClass
 
 /** A type-safe compiled [Matcher] that accepts inputs of type [T]. */
@@ -65,11 +63,12 @@ abstract class KMatcher<in T : Any>(
   companion object {
     /** Compiles [matcher] into a [KMatcher]. */
     fun compile(matcher: Matcher): KMatcher<*> = when (matcher.matcherCase) {
-      Matcher.MatcherCase.CONSTANT_MATCHER -> ConstantMatcher(matcher)
-      Matcher.MatcherCase.VALUE_MATCHER -> ValueMatcher.compile(matcher)
-      Matcher.MatcherCase.VALUE_IN_SET_MATCHER -> ValueInSetMatcher.compile(matcher)
-      Matcher.MatcherCase.COMBININGMATCHER -> CombiningMatcher(matcher)
-      Matcher.MatcherCase.MATCHER_NOT_SET -> throw IllegalArgumentException("Unsupported matcher: $matcher")
+      MatcherCase.CONSTANT_MATCHER -> ConstantMatcher(matcher)
+      MatcherCase.VALUE_MATCHER -> ValueMatcher.compile(matcher)
+      MatcherCase.VALUE_IN_SET_MATCHER -> ValueInSetMatcher.compile(matcher)
+      MatcherCase.STRING_MATCHER -> StringMatcher.compile(matcher)
+      MatcherCase.COMBININGMATCHER -> CombiningMatcher(matcher)
+      MatcherCase.MATCHER_NOT_SET -> throw IllegalArgumentException("Unsupported matcher: $matcher")
       null -> throw NullPointerException()
     }
   }

@@ -12,6 +12,7 @@ message Matcher {
     bool constant_matcher = 1;
     ValueMatcher value_matcher = 2;
     ValueInSetMatcher value_in_set_matcher = 3;
+    StringMatcher string_matcher = 4;
 
     CombiningMatcher combiningMatcher = 10;
   }
@@ -44,6 +45,29 @@ message ValueInSetMatcher {
     FloatValueSet float_values = 3;
     DoubleValueSet double_values = 4;
     StringValueSet string_values = 5;
+  }
+}
+
+// A matcher that matches on strings.
+message StringMatcher {
+  // Case sensitivity of this matcher. Defaults to CASE_SENSITIVE.
+  enum CaseSensitivity {
+    CASE_SENSITIVE = 0;
+    CASE_INSENSITIVE = 1;
+  }
+  CaseSensitivity case_sensitive = 1;
+
+  oneof matcher {
+    // Matches a string exactly.
+    string value = 2;
+    // Matches strings that start with a value.
+    string starts_with = 3;
+    // Matches strings that end with a value.
+    string ends_with = 4;
+    // Matches strings that contain with a value.
+    string contains = 5;
+    // Matches strings that match the regex pattern.
+    string pattern = 6;
   }
 }
 
