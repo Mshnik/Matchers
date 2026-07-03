@@ -69,6 +69,7 @@ abstract class KMatcher<in T : Any>(
           KMessageMatcher.compile(matcher, expectedClass as KClass<Message>) as KMatcher<T>
         }
 
+        MatcherCase.NOT_MATCHER -> KNotMatcher(matcher, expectedClass)
         MatcherCase.COMBINING_MATCHER -> KCombiningMatcher(matcher, expectedClass)
         MatcherCase.MATCHER_NOT_SET -> throw IllegalArgumentException("Unsupported matcher: $matcher")
         null -> throw NullPointerException()

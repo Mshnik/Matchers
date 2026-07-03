@@ -14,7 +14,9 @@ message Matcher {
     ValueInSetMatcher value_in_set_matcher = 3;
     StringMatcher string_matcher = 4;
     MessageMatcher message_matcher = 5;
-    CombiningMatcher combining_matcher = 10;
+
+    Matcher not_matcher = 6;
+    CombiningMatcher combining_matcher = 7;
   }
 }
 
