@@ -13,8 +13,8 @@ class ConstantMatcherTest {
     val trueProto = Matcher.newBuilder().setConstantMatcher(true).build()
     val falseProto = Matcher.newBuilder().setConstantMatcher(false).build()
 
-    val trueMatcher = KMatcher.compile(trueProto)
-    val falseMatcher = KMatcher.compile(falseProto)
+    val trueMatcher = KMatcher.compile<Any>(trueProto)
+    val falseMatcher = KMatcher.compile<Any>(falseProto)
 
     assertTrue(trueMatcher.match("Any arbitrary input payload"))
     assertFalse(falseMatcher.match(12345))

@@ -60,7 +60,7 @@ class KMatcherTest {
   fun `compile fails fast on unset matcher fields`() {
     val emptyProto = Matcher.getDefaultInstance()
     assertThrows<IllegalArgumentException> {
-      KMatcher.compile(emptyProto)
+      KMatcher.compile<Any>(emptyProto)
     }
   }
 }

@@ -13,8 +13,8 @@ message Matcher {
     ValueMatcher value_matcher = 2;
     ValueInSetMatcher value_in_set_matcher = 3;
     StringMatcher string_matcher = 4;
-
-    CombiningMatcher combiningMatcher = 10;
+//    MessageMatcher message_matcher = 5;
+    CombiningMatcher combining_matcher = 10;
   }
 }
 
@@ -71,6 +71,25 @@ message StringMatcher {
     // Matches strings that match the regex pattern.
     string pattern = 6;
   }
+}
+
+// A Matcher on a proto message input.
+message MessageMatcher {
+  // The full name of the message.
+  string message_name = 1;
+
+  // A matcher on a specific field in the message.
+  // At least one of field_number and field_name must be populated.
+  message FieldMatcher {
+    int32 field_number = 1;
+    string field_name = 2;
+    Matcher matcher = 3;
+  }
+
+  // Fields that must match for the MessageMatcher to match.
+  // Results are AND'ed: all fields must match for the surrounding matcher to
+  // match.
+  repeated FieldMatcher fields = 2;
 }
 
 // A Matcher wrapping a collection of other matchers and combining their results.

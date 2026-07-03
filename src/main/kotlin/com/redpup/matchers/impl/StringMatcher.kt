@@ -6,7 +6,7 @@ import com.redpup.matchers.proto.StringMatcher.CaseSensitivity
 import com.redpup.matchers.proto.StringMatcher.MatcherCase
 
 /** The compiled implementation of [com.redpup.matchers.proto.StringMatcher]. */
-sealed class StringMatcher(proto: Matcher) : KMatcher<String>(String::class, proto) {
+internal sealed class StringMatcher(proto: Matcher) : KMatcher<String>(String::class, proto) {
   protected val ignoreCase = proto.stringMatcher.caseSensitive == CaseSensitivity.CASE_INSENSITIVE
 
   companion object {

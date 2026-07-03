@@ -19,11 +19,11 @@ class StringMatcherTest {
       ProtoStr.newBuilder().setValue("Kotlin").setCaseSensitive(ProtoStr.CaseSensitivity.CASE_INSENSITIVE)
     ).build()
 
-    assertTrue(KMatcher.compile(sensitiveProto).match("Kotlin"))
-    assertFalse(KMatcher.compile(sensitiveProto).match("kotlin"))
+    assertTrue(KMatcher.compile<String>(sensitiveProto).match("Kotlin"))
+    assertFalse(KMatcher.compile<String>(sensitiveProto).match("kotlin"))
 
-    assertTrue(KMatcher.compile(insensitiveProto).match("kotlin"))
-    assertTrue(KMatcher.compile(insensitiveProto).match("KOTLIN"))
+    assertTrue(KMatcher.compile<String>(insensitiveProto).match("kotlin"))
+    assertTrue(KMatcher.compile<String>(insensitiveProto).match("KOTLIN"))
   }
 
   @Test
@@ -32,7 +32,7 @@ class StringMatcherTest {
     val proto = Matcher.newBuilder().setStringMatcher(
       ProtoStr.newBuilder().setStartsWith("Framework").setCaseSensitive(ProtoStr.CaseSensitivity.CASE_SENSITIVE)
     ).build()
-    val matcher = KMatcher.compile(proto)
+    val matcher = KMatcher.compile<String>(proto)
 
     assertTrue(matcher.match("Frame"))
     assertFalse(matcher.match("Work"))
@@ -43,7 +43,7 @@ class StringMatcherTest {
     val proto = Matcher.newBuilder().setStringMatcher(
       ProtoStr.newBuilder().setPattern("^[A-Z]+$")
     ).build()
-    val matcher = KMatcher.compile(proto)
+    val matcher = KMatcher.compile<String>(proto)
 
     assertTrue(matcher.match("ABC"))
     assertFalse(matcher.match("abc"))

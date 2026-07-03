@@ -15,7 +15,7 @@ class ValueMatcherTest {
     val proto = Matcher.newBuilder()
       .setValueMatcher(ProtoValueMatcher.newBuilder().setInt32Value(50))
       .build()
-    val matcher = KMatcher.compile(proto)
+    val matcher = KMatcher.compile<Int>(proto)
 
     assertTrue(matcher.match(50))
     assertFalse(matcher.match(25))
@@ -26,7 +26,7 @@ class ValueMatcherTest {
     val proto = Matcher.newBuilder()
       .setValueMatcher(ProtoValueMatcher.newBuilder().setStringValue("target"))
       .build()
-    val matcher = KMatcher.compile(proto)
+    val matcher = KMatcher.compile<String>(proto)
 
     assertTrue(matcher.match("target"))
     assertFalse(matcher.match("different"))
@@ -37,7 +37,7 @@ class ValueMatcherTest {
     val proto = Matcher.newBuilder()
       .setValueMatcher(ProtoValueMatcher.newBuilder().setBoolValue(true))
       .build()
-    val matcher = KMatcher.compile(proto)
+    val matcher = KMatcher.compile<Boolean>(proto)
 
     assertTrue(matcher.match(true))
     assertFalse(matcher.match(false))
@@ -49,7 +49,7 @@ class ValueMatcherTest {
     val proto = Matcher.newBuilder()
       .setValueMatcher(ProtoValueMatcher.newBuilder().setEnumValue(2))
       .build()
-    val matcher = KMatcher.compile(proto)
+    val matcher = KMatcher.compile<TestEnum>(proto)
 
     assertTrue(matcher.match(TestEnum.TEST_ENUM_2))
     assertFalse(matcher.match(TestEnum.TEST_ENUM_1))

@@ -4,29 +4,45 @@ import com.google.protobuf.ProtocolMessageEnum
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.ValueMatcher.ValueCase
+import kotlin.reflect.KClass
 
 /** The implementation for [com.redpup.matchers.proto.ValueMatcher]. */
-sealed class ValueMatcher<in T : Any>(
-  expectedClass: kotlin.reflect.KClass<T>,
-  proto: Matcher,
-) : KMatcher<T>(expectedClass, proto) {
-  companion object {
-    /** Compiles [proto] into a [ValueMatcher]. */
-    fun compile(proto: Matcher): KMatcher<*> {
-      check(proto.hasValueMatcher()) { "Expected value proto, found $proto" }
+internal sealed class ValueMatcher<in T : Any>(expectedClass: KClass<T>, proto: Matcher) :
+  KMatcher<T>(expectedClass, proto) {
 
-      return when (proto.valueMatcher.valueCase) {
-        ValueCase.BOOL_VALUE -> BooleanValueMatcher(proto)
-        ValueCase.INT32_VALUE -> Int32ValueMatcher(proto)
-        ValueCase.INT64_VALUE -> Int64ValueMatcher(proto)
-        ValueCase.FLOAT_VALUE -> FloatValueMatcher(proto)
-        ValueCase.DOUBLE_VALUE -> DoubleValueMatcher(proto)
-        ValueCase.STRING_VALUE -> StringValueMatcher(proto)
-        ValueCase.ENUM_VALUE -> EnumValueMatcher(proto).transform<ProtocolMessageEnum> { it.number }
-        ValueCase.VALUE_NOT_SET -> throw IllegalArgumentException("ValueMatcher has no value set: $proto")
-        null -> throw NullPointerException("ValueCase is null")
+  companion object {
+    /** Compiles [proto] into a [KMatcher] tailored exactly to [expectedClass]. */
+    fun <T : Any> compile(proto: Matcher, expectedClass: KClass<T>): KMatcher<T> {
+      check(proto.hasValueMatcher()) { "Expected ValueMatcher proto, found $proto" }
+
+      val case = proto.valueMatcher.valueCase
+      val matcher: KMatcher<*> = when {
+        ProtocolMessageEnum::class.java.isAssignableFrom(expectedClass.java)
+          && case == ValueCase.ENUM_VALUE -> EnumValueMatcher(proto).transform<ProtocolMessageEnum> { it.number }
+
+        expectedClass == Boolean::class && case == ValueCase.BOOL_VALUE -> BooleanValueMatcher(proto)
+        expectedClass == Int::class && case == ValueCase.INT32_VALUE -> Int32ValueMatcher(proto)
+        expectedClass == Long::class && case == ValueCase.INT64_VALUE -> Int64ValueMatcher(proto)
+        expectedClass == Float::class && case == ValueCase.FLOAT_VALUE -> FloatValueMatcher(proto)
+        expectedClass == Double::class && case == ValueCase.DOUBLE_VALUE -> DoubleValueMatcher(proto)
+        expectedClass == String::class && case == ValueCase.STRING_VALUE -> StringValueMatcher(proto)
+
+        case == ValueCase.VALUE_NOT_SET -> throw IllegalArgumentException(
+          "ValueMatcher has no value set: $proto"
+        )
+
+        else -> throw IllegalArgumentException(
+          "Type mismatch or unsupported combination: Cannot match expected class " +
+            "'${expectedClass.simpleName}' against serialized proto payload case '$case'."
+        )
       }
+
+      @Suppress("UNCHECKED_CAST") // Safe after above validation.
+      return matcher as KMatcher<T>
     }
+
+    /** Compiles [proto] into a [ValueMatcher]. */
+    inline fun <reified T : Any> compile(proto: Matcher): KMatcher<T> = compile(proto, T::class)
   }
 }
 

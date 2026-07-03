@@ -4,28 +4,53 @@ import com.google.protobuf.ProtocolMessageEnum
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.ValueInSetMatcher.ValuesCase
+import kotlin.reflect.KClass
 
 /** The implementation for [com.redpup.matchers.proto.ValueInSetMatcher]. */
-sealed class ValueInSetMatcher<in T : Any>(
-  expectedClass: kotlin.reflect.KClass<T>,
-  proto: Matcher,
-) : KMatcher<T>(expectedClass, proto) {
-  companion object {
-    /** Compiles [proto] into a [ValueInSetMatcher]. */
-    fun compile(proto: Matcher): KMatcher<*> {
-      check(proto.hasValueInSetMatcher()) { "Expected value proto, found $proto" }
+internal sealed class ValueInSetMatcher<in T : Any>(expectedClass: KClass<T>, proto: Matcher) :
+  KMatcher<T>(expectedClass, proto) {
 
-      return when (proto.valueInSetMatcher.valuesCase) {
-        ValuesCase.INT32_VALUES -> Int32ValueInSetMatcher(proto)
-        ValuesCase.INT64_VALUES -> Int64ValueInSetMatcher(proto)
-        ValuesCase.FLOAT_VALUES -> FloatValueInSetMatcher(proto)
-        ValuesCase.DOUBLE_VALUES -> DoubleValueInSetMatcher(proto)
-        ValuesCase.STRING_VALUES -> StringValueInSetMatcher(proto)
-        ValuesCase.VALUES_NOT_SET -> throw IllegalArgumentException("ValueInSetMatcher has no value set: $proto")
-        ValuesCase.ENUM_VALUES -> EnumValueInSetMatcher(proto).transform<ProtocolMessageEnum> { it.number }
-        null -> throw NullPointerException("ValuesCase is null")
+  companion object {
+    /** Compiles [proto] into a [KMatcher] tailored exactly to [expectedClass]. */
+    fun <T : Any> compile(proto: Matcher, expectedClass: KClass<T>): KMatcher<T> {
+      check(proto.hasValueInSetMatcher()) { "Expected ValueInSetMatcher proto, found $proto" }
+
+      val case = proto.valueInSetMatcher.valuesCase
+
+      val matcher: KMatcher<*> = when {
+        ProtocolMessageEnum::class.java.isAssignableFrom(expectedClass.java)
+          && case == ValuesCase.ENUM_VALUES -> EnumValueInSetMatcher(proto).transform<ProtocolMessageEnum> { it.number }
+
+        expectedClass == Int::class
+          && case == ValuesCase.INT32_VALUES -> Int32ValueInSetMatcher(proto)
+
+        expectedClass == Long::class
+          && case == ValuesCase.INT64_VALUES -> Int64ValueInSetMatcher(proto)
+
+        expectedClass == Float::class
+          && case == ValuesCase.FLOAT_VALUES -> FloatValueInSetMatcher(proto)
+
+        expectedClass == Double::class
+          && case == ValuesCase.DOUBLE_VALUES -> DoubleValueInSetMatcher(proto)
+
+        expectedClass == String::class
+          && case == ValuesCase.STRING_VALUES -> StringValueInSetMatcher(proto)
+
+        case == ValuesCase.VALUES_NOT_SET ->
+          throw IllegalArgumentException("ValueInSetMatcher has no values set: $proto")
+
+        else -> throw IllegalArgumentException(
+          "Type mismatch or unsupported combination: Cannot match expected class set " +
+            "'${expectedClass.simpleName}' against serialized proto payload case '$case'."
+        )
       }
+
+      @Suppress("UNCHECKED_CAST") // Safe after above validation.
+      return matcher as KMatcher<T>
     }
+
+    /** Compiles [proto] into a [ValueInSetMatcher]. */
+    inline fun <reified T : Any> compile(proto: Matcher): KMatcher<T> = compile(proto, T::class)
   }
 }
 

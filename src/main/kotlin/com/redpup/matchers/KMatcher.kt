@@ -47,16 +47,24 @@ abstract class KMatcher<in T : Any>(
   }
 
   companion object {
+    fun <T : Any> compile(matcher: Matcher, expectedClass: KClass<T>): KMatcher<T> =
+      when (matcher.matcherCase) {
+        MatcherCase.CONSTANT_MATCHER -> ConstantMatcher(matcher)
+        MatcherCase.VALUE_MATCHER -> ValueMatcher.compile(matcher, expectedClass)
+        MatcherCase.VALUE_IN_SET_MATCHER -> ValueInSetMatcher.compile(matcher, expectedClass)
+        MatcherCase.STRING_MATCHER -> {
+          check(expectedClass == String::class) { "Expected String class, found $expectedClass" }
+          @Suppress("UNCHECKED_CAST") // Safe after above validation.
+          StringMatcher.compile(matcher) as KMatcher<T>
+        }
+        // MatcherCase.MESSAGE_MATCHER -> MessageMatcher.compile(matcher)
+        MatcherCase.COMBINING_MATCHER -> CombiningMatcher(matcher, expectedClass)
+        MatcherCase.MATCHER_NOT_SET -> throw IllegalArgumentException("Unsupported matcher: $matcher")
+        null -> throw NullPointerException()
+      }
+
     /** Compiles [matcher] into a [KMatcher]. */
-    fun compile(matcher: Matcher): KMatcher<*> = when (matcher.matcherCase) {
-      MatcherCase.CONSTANT_MATCHER -> ConstantMatcher(matcher)
-      MatcherCase.VALUE_MATCHER -> ValueMatcher.compile(matcher)
-      MatcherCase.VALUE_IN_SET_MATCHER -> ValueInSetMatcher.compile(matcher)
-      MatcherCase.STRING_MATCHER -> StringMatcher.compile(matcher)
-      MatcherCase.COMBININGMATCHER -> CombiningMatcher(matcher)
-      MatcherCase.MATCHER_NOT_SET -> throw IllegalArgumentException("Unsupported matcher: $matcher")
-      null -> throw NullPointerException()
-    }
+    inline fun <reified T : Any> compile(matcher: Matcher): KMatcher<T> = compile(matcher, T::class)
 
     /** Safely narrows an unknown/star-projected matcher to a specific expected type. */
     inline fun <reified R : Any> KMatcher<*>.typed(): KMatcher<R> {
