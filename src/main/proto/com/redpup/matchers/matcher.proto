@@ -83,7 +83,17 @@ message MessageMatcher {
   message FieldMatcher {
     int32 field_number = 1;
     string field_name = 2;
-    Matcher matcher = 3;
+
+    // How the matcher should be applied to the field.
+    enum FieldMatchType {
+      FIELD_MATCH_TYPE_UNSET = 0;
+      SINGLE_FIELD = 1;
+      REPEATED_FIELD_ANY = 2;
+      REPEATED_FIELD_ALL = 3;
+      REPEATED_FIELD_NONE = 4;
+    }
+    FieldMatchType match_type = 3;
+    Matcher matcher = 4;
   }
 
   // Fields that must match for the MessageMatcher to match.

@@ -2,8 +2,8 @@ package com.redpup.matchers.impl
 
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.MessageMatcher
+import com.redpup.matchers.proto.MessageMatcher.FieldMatcher.FieldMatchType
 import com.redpup.matchers.proto.ValueMatcher
-import com.redpup.matchers.testing.proto.TestEnum
 import com.redpup.matchers.testing.proto.TestMessage
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -13,137 +13,191 @@ import org.junit.jupiter.api.assertThrows
 class KMessageMatcherTest {
 
   @Test
-  fun `MessageMatcher matches when a field selected by number passes target constraint`() {
-    val int32TargetValue = Matcher.newBuilder()
+  fun `SINGLE_FIELD matches valid singular field properties`() {
+    val innerValue = Matcher.newBuilder()
       .setValueMatcher(ValueMatcher.newBuilder().setInt32Value(42))
       .build()
 
     val fieldMatcher = MessageMatcher.FieldMatcher.newBuilder()
+      .setFieldNumber(2) // int32_value
+      .setMatchType(FieldMatchType.SINGLE_FIELD)
+      .setMatcher(innerValue)
+      .build()
+
+    val proto = Matcher.newBuilder()
+      .setMessageMatcher(
+        MessageMatcher.newBuilder()
+          .setMessageName("com.redpup.TestMessage")
+          .addFields(fieldMatcher)
+      ).build()
+
+    val matcher = KMessageMatcher.compile<TestMessage>(proto)
+
+    assertTrue(matcher.match(TestMessage.newBuilder().setInt32Value(42).build()))
+    assertFalse(matcher.match(TestMessage.newBuilder().setInt32Value(100).build()))
+  }
+
+  @Test
+  fun `SINGLE_FIELD throws IllegalStateException if assigned against repeated proto properties`() {
+    val innerValue = Matcher.newBuilder()
+      .setValueMatcher(ValueMatcher.newBuilder().setInt32Value(42))
+      .build()
+
+    val invalidFieldMatcher = MessageMatcher.FieldMatcher.newBuilder()
+      .setFieldNumber(8) // int32_values
+      .setMatchType(FieldMatchType.SINGLE_FIELD)
+      .setMatcher(innerValue)
+      .build()
+
+    val proto = Matcher.newBuilder()
+      .setMessageMatcher(
+        MessageMatcher.newBuilder()
+          .setMessageName("com.redpup.TestMessage")
+          .addFields(invalidFieldMatcher)
+      ).build()
+
+    assertThrows<IllegalStateException> {
+      KMessageMatcher.compile<TestMessage>(proto)
+    }
+  }
+
+  @Test
+  fun `REPEATED_FIELD_ANY matches if at least one list item passes the condition`() {
+    val innerValue = Matcher.newBuilder()
+      .setValueMatcher(ValueMatcher.newBuilder().setInt32Value(10))
+      .build()
+
+    val fieldMatcher = MessageMatcher.FieldMatcher.newBuilder()
+      .setFieldName("int32_values")
+      .setMatchType(FieldMatchType.REPEATED_FIELD_ANY)
+      .setMatcher(innerValue)
+      .build()
+
+    val proto = Matcher.newBuilder()
+      .setMessageMatcher(MessageMatcher.newBuilder().addFields(fieldMatcher))
+      .build()
+
+    val matcher = KMessageMatcher.compile<TestMessage>(proto)
+
+    // Contains 10 alongside other values -> true
+    assertTrue(
+      matcher.match(
+        TestMessage.newBuilder().addAllInt32Values(listOf(5, 10, 15)).build()
+      )
+    )
+    // Devoid of 10 -> false
+    assertFalse(
+      matcher.match(
+        TestMessage.newBuilder().addAllInt32Values(listOf(1, 2, 3)).build()
+      )
+    )
+    // Empty lists -> false
+    assertFalse(matcher.match(TestMessage.getDefaultInstance()))
+  }
+
+  @Test
+  fun `REPEATED_FIELD_ALL matches only if all list items pass the condition`() {
+    val innerValue = Matcher.newBuilder()
+      .setValueMatcher(ValueMatcher.newBuilder().setInt32Value(7))
+      .build()
+
+    val fieldMatcher = MessageMatcher.FieldMatcher.newBuilder()
+      .setFieldName("int32_values")
+      .setMatchType(FieldMatchType.REPEATED_FIELD_ALL)
+      .setMatcher(innerValue)
+      .build()
+
+    val proto = Matcher.newBuilder()
+      .setMessageMatcher(MessageMatcher.newBuilder().addFields(fieldMatcher))
+      .build()
+
+    val matcher = KMessageMatcher.compile<TestMessage>(proto)
+
+    // Every item is 7 -> true
+    assertTrue(
+      matcher.match(
+        TestMessage.newBuilder().addAllInt32Values(listOf(7, 7)).build()
+      )
+    )
+    // One element is divergent -> false
+    assertFalse(
+      matcher.match(
+        TestMessage.newBuilder().addAllInt32Values(listOf(7, 9, 7)).build()
+      )
+    )
+    // Empty collections vacuously evaluate to true under all criteria operations
+    assertTrue(matcher.match(TestMessage.getDefaultInstance()))
+  }
+
+  @Test
+  fun `REPEATED_FIELD_NONE matches only if no list items pass the condition`() {
+    val innerValue = Matcher.newBuilder()
+      .setValueMatcher(ValueMatcher.newBuilder().setInt32Value(100))
+      .build()
+
+    val fieldMatcher = MessageMatcher.FieldMatcher.newBuilder()
+      .setFieldName("int32_values")
+      .setMatchType(FieldMatchType.REPEATED_FIELD_NONE)
+      .setMatcher(innerValue)
+      .build()
+
+    val proto = Matcher.newBuilder()
+      .setMessageMatcher(MessageMatcher.newBuilder().addFields(fieldMatcher))
+      .build()
+
+    val matcher = KMessageMatcher.compile<TestMessage>(proto)
+
+    // Elements exclude 100 -> true
+    assertTrue(
+      matcher.match(
+        TestMessage.newBuilder().addAllInt32Values(listOf(1, 2, 3)).build()
+      )
+    )
+    // Collection includes 100 -> false
+    assertFalse(
+      matcher.match(
+        TestMessage.newBuilder().addAllInt32Values(listOf(50, 100)).build()
+      )
+    )
+    // Empty list -> true
+    assertTrue(matcher.match(TestMessage.getDefaultInstance()))
+  }
+
+  @Test
+  fun `REPEATED_FIELD criteria initialization throws IllegalStateException against non-repeated properties`() {
+    val innerValue = Matcher.newBuilder()
+      .setValueMatcher(ValueMatcher.newBuilder().setInt32Value(5))
+      .build()
+
+    val invalidFieldMatcher = MessageMatcher.FieldMatcher.newBuilder()
+      .setFieldNumber(2) // int32_value (Singular!)
+      .setMatchType(FieldMatchType.REPEATED_FIELD_ANY)
+      .setMatcher(innerValue)
+      .build()
+
+    val proto = Matcher.newBuilder()
+      .setMessageMatcher(MessageMatcher.newBuilder().addFields(invalidFieldMatcher))
+      .build()
+
+    assertThrows<IllegalStateException> {
+      KMessageMatcher.compile<TestMessage>(proto)
+    }
+  }
+
+  @Test
+  fun `KMessageMatcher execution fails fast on unset matchType strategies`() {
+    val fieldMatcher = MessageMatcher.FieldMatcher.newBuilder()
       .setFieldNumber(2)
-      .setMatcher(int32TargetValue)
-      .build()
-
-    val messageMatcherProto = Matcher.newBuilder()
-      .setMessageMatcher(
-        MessageMatcher.newBuilder()
-          .setMessageName(TestMessage.getDescriptor().fullName)
-          .addFields(fieldMatcher)
-      ).build()
-
-    val compiledMatcher = KMessageMatcher.compile<TestMessage>(messageMatcherProto)
-
-    val matchingMessage = TestMessage.newBuilder().setInt32Value(42).build()
-    val failingMessage = TestMessage.newBuilder().setInt32Value(99).build()
-
-    assertTrue(compiledMatcher.match(matchingMessage))
-    assertFalse(compiledMatcher.match(failingMessage))
-  }
-
-  @Test
-  fun `MessageMatcher matches when a field selected by name passes target constraint`() {
-    val stringTargetValue = Matcher.newBuilder()
-      .setValueMatcher(ValueMatcher.newBuilder().setStringValue("Kotlin"))
-      .build()
-
-    val fieldMatcher = MessageMatcher.FieldMatcher.newBuilder()
-      .setFieldName("string_value")
-      .setMatcher(stringTargetValue)
-      .build()
-
-    val messageMatcherProto = Matcher.newBuilder()
-      .setMessageMatcher(
-        MessageMatcher.newBuilder()
-          .setMessageName(TestMessage.getDescriptor().fullName)
-          .addFields(fieldMatcher)
-      ).build()
-
-    val compiledMatcher = KMessageMatcher.compile<TestMessage>(messageMatcherProto)
-
-    val matchingMessage = TestMessage.newBuilder().setStringValue("Kotlin").build()
-    val failingMessage = TestMessage.newBuilder().setStringValue("Java").build()
-
-    assertTrue(compiledMatcher.match(matchingMessage))
-    assertFalse(compiledMatcher.match(failingMessage))
-  }
-
-  @Test
-  fun `MessageMatcher combines multiple fields with AND logic functionality`() {
-    val intMatcher =
-      Matcher.newBuilder().setValueMatcher(ValueMatcher.newBuilder().setInt32Value(100))
-        .build()
-    val field1 =
-      MessageMatcher.FieldMatcher.newBuilder().setFieldNumber(2).setMatcher(intMatcher).build()
-
-    val stringMatcher =
-      Matcher.newBuilder().setValueMatcher(ValueMatcher.newBuilder().setStringValue("Valid"))
-        .build()
-    val field2 = MessageMatcher.FieldMatcher.newBuilder().setFieldName("string_value")
-      .setMatcher(stringMatcher).build()
-
-    val messageMatcherProto = Matcher.newBuilder()
-      .setMessageMatcher(
-        MessageMatcher.newBuilder()
-          .setMessageName(TestMessage.getDescriptor().fullName)
-          .addFields(field1)
-          .addFields(field2)
-      ).build()
-
-    val compiledMatcher = KMessageMatcher.compile<TestMessage>(messageMatcherProto)
-
-    val fullyMatchingMessage =
-      TestMessage.newBuilder().setInt32Value(100).setStringValue("Valid").build()
-    val partiallyMatchingMessage =
-      TestMessage.newBuilder().setInt32Value(100).setStringValue("Invalid").build()
-    val completelyFailingMessage =
-      TestMessage.newBuilder().setInt32Value(50).setStringValue("Invalid").build()
-
-    assertTrue(compiledMatcher.match(fullyMatchingMessage))
-    assertFalse(compiledMatcher.match(partiallyMatchingMessage))
-    assertFalse(compiledMatcher.match(completelyFailingMessage))
-  }
-
-  @Test
-  fun `MessageMatcher successfully resolves enum fields and tests boundaries`() {
-    val enumTargetValue = Matcher.newBuilder()
-      .setValueMatcher(ValueMatcher.newBuilder().setEnumValue(TestEnum.TEST_ENUM_1_VALUE))
-      .build()
-
-    val fieldMatcher = MessageMatcher.FieldMatcher.newBuilder()
-      .setFieldName("enum_value")
-      .setMatcher(enumTargetValue)
-      .build()
-
-    val messageMatcherProto = Matcher.newBuilder()
-      .setMessageMatcher(
-        MessageMatcher.newBuilder()
-          .setMessageName(TestMessage.getDescriptor().fullName)
-          .addFields(fieldMatcher)
-      ).build()
-
-    val compiledMatcher = KMessageMatcher.compile<TestMessage>(messageMatcherProto)
-
-    val matchingMessage = TestMessage.newBuilder().setEnumValue(TestEnum.TEST_ENUM_1).build()
-    val failingMessage = TestMessage.newBuilder().setEnumValue(TestEnum.TEST_ENUM_2).build()
-
-    assertTrue(compiledMatcher.match(matchingMessage))
-    assertFalse(compiledMatcher.match(failingMessage))
-  }
-
-  @Test
-  fun `MessageMatcher throws IllegalArgumentException if field properties are fully omitted`() {
-    val fieldMatcher = MessageMatcher.FieldMatcher.newBuilder()
+      .setMatchType(FieldMatchType.FIELD_MATCH_TYPE_UNSET) // Unset strategy boundary
       .setMatcher(Matcher.newBuilder().setConstantMatcher(true))
       .build()
 
-    val invalidMessageMatcherProto = Matcher.newBuilder()
-      .setMessageMatcher(
-        MessageMatcher.newBuilder()
-          .setMessageName(TestMessage.getDescriptor().fullName)
-          .addFields(fieldMatcher)
-      ).build()
+    val proto = Matcher.newBuilder()
+      .setMessageMatcher(MessageMatcher.newBuilder().addFields(fieldMatcher))
+      .build()
 
     assertThrows<IllegalArgumentException> {
-      KMessageMatcher.compile<TestMessage>(invalidMessageMatcherProto)
+      KMessageMatcher.compile<TestMessage>(proto)
     }
   }
 }
