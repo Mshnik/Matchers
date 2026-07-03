@@ -2,21 +2,23 @@ package com.redpup.matchers.impl
 
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
-import com.redpup.matchers.proto.StringMatcher as ProtoStr
+import com.redpup.matchers.proto.StringMatcher
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class StringMatcherTest {
+class KStringMatcherTest {
 
   @Test
   fun `ValueStringMatcher respects case sensitivity rules`() {
     val sensitiveProto = Matcher.newBuilder().setStringMatcher(
-      ProtoStr.newBuilder().setValue("Kotlin").setCaseSensitive(ProtoStr.CaseSensitivity.CASE_SENSITIVE)
+      StringMatcher.newBuilder().setValue("Kotlin")
+        .setCaseSensitive(StringMatcher.CaseSensitivity.CASE_SENSITIVE)
     ).build()
 
     val insensitiveProto = Matcher.newBuilder().setStringMatcher(
-      ProtoStr.newBuilder().setValue("Kotlin").setCaseSensitive(ProtoStr.CaseSensitivity.CASE_INSENSITIVE)
+      StringMatcher.newBuilder().setValue("Kotlin")
+        .setCaseSensitive(StringMatcher.CaseSensitivity.CASE_INSENSITIVE)
     ).build()
 
     assertTrue(KMatcher.compile<String>(sensitiveProto).match("Kotlin"))
@@ -28,9 +30,9 @@ class StringMatcherTest {
 
   @Test
   fun `StartsWithStringMatcher asserts conditions based on current inversion design`() {
-    // Adhering to implementation target: protoValue.startsWith(runtimeInput)
     val proto = Matcher.newBuilder().setStringMatcher(
-      ProtoStr.newBuilder().setStartsWith("Framework").setCaseSensitive(ProtoStr.CaseSensitivity.CASE_SENSITIVE)
+      StringMatcher.newBuilder().setStartsWith("Framework")
+        .setCaseSensitive(StringMatcher.CaseSensitivity.CASE_SENSITIVE)
     ).build()
     val matcher = KMatcher.compile<String>(proto)
 
@@ -41,7 +43,7 @@ class StringMatcherTest {
   @Test
   fun `PatternStringMatcher matches standard regular expression definitions`() {
     val proto = Matcher.newBuilder().setStringMatcher(
-      ProtoStr.newBuilder().setPattern("^[A-Z]+$")
+      StringMatcher.newBuilder().setPattern("^[A-Z]+$")
     ).build()
     val matcher = KMatcher.compile<String>(proto)
 

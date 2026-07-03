@@ -6,7 +6,7 @@ import com.redpup.matchers.proto.Matcher
 import kotlin.reflect.KClass
 
 /** The implementation for [com.redpup.matchers.proto.CombiningMatcher]. */
-internal class CombiningMatcher<in T : Any>(proto: Matcher, expectedClass: KClass<T>) :
+internal class KCombiningMatcher<in T : Any>(proto: Matcher, expectedClass: KClass<T>) :
   KMatcher<T>(expectedClass, proto) {
   private val matchers = proto.combiningMatcher.matchersList.map { compile(it, expectedClass) }
 

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class ConstantMatcherTest {
+class KConstantMatcherTest {
 
   @Test
   fun `ConstantMatcher maps directly to its boolean configuration state`() {

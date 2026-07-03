@@ -50,15 +50,15 @@ abstract class KMatcher<in T : Any>(
   companion object {
     fun <T : Any> compile(matcher: Matcher, expectedClass: KClass<T>): KMatcher<T> =
       when (matcher.matcherCase) {
-        MatcherCase.CONSTANT_MATCHER -> ConstantMatcher(matcher)
-        MatcherCase.VALUE_MATCHER -> ValueMatcher.compile(matcher, expectedClass)
-        MatcherCase.VALUE_IN_SET_MATCHER -> ValueInSetMatcher.compile(matcher, expectedClass)
+        MatcherCase.CONSTANT_MATCHER -> KConstantMatcher(matcher)
+        MatcherCase.VALUE_MATCHER -> KValueMatcher.compile(matcher, expectedClass)
+        MatcherCase.VALUE_IN_SET_MATCHER -> KValueInSetMatcher.compile(matcher, expectedClass)
         MatcherCase.STRING_MATCHER -> {
           check(expectedClass == String::class) {
             "Expected String class, found $expectedClass"
           }
           @Suppress("UNCHECKED_CAST") // Safe after above validation.
-          StringMatcher.compile(matcher) as KMatcher<T>
+          KStringMatcher.compile(matcher) as KMatcher<T>
         }
 
         MatcherCase.MESSAGE_MATCHER -> {
@@ -66,10 +66,10 @@ abstract class KMatcher<in T : Any>(
             "Expected subtype of Message, found $expectedClass"
           }
           @Suppress("UNCHECKED_CAST") // Safe after above validation.
-          MessageMatcher.compile(matcher, expectedClass as KClass<Message>) as KMatcher<T>
+          KMessageMatcher.compile(matcher, expectedClass as KClass<Message>) as KMatcher<T>
         }
 
-        MatcherCase.COMBINING_MATCHER -> CombiningMatcher(matcher, expectedClass)
+        MatcherCase.COMBINING_MATCHER -> KCombiningMatcher(matcher, expectedClass)
         MatcherCase.MATCHER_NOT_SET -> throw IllegalArgumentException("Unsupported matcher: $matcher")
         null -> throw NullPointerException()
       }

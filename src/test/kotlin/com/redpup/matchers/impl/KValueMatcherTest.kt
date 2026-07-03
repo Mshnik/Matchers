@@ -1,19 +1,19 @@
 package com.redpup.matchers.impl
 
-import com.redpup.proto.TestEnum
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
-import com.redpup.matchers.proto.ValueMatcher as ValueMatcherProto
+import com.redpup.matchers.proto.ValueMatcher
+import com.redpup.proto.TestEnum
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class ValueMatcherTest {
+class KValueMatcherTest {
 
   @Test
   fun `Int32ValueMatcher evaluates variations accurately`() {
     val proto = Matcher.newBuilder()
-      .setValueMatcher(ValueMatcherProto.newBuilder().setInt32Value(50))
+      .setValueMatcher(ValueMatcher.newBuilder().setInt32Value(50))
       .build()
     val matcher = KMatcher.compile<Int>(proto)
 
@@ -24,7 +24,7 @@ class ValueMatcherTest {
   @Test
   fun `Int64ValueMatcher evaluates variations accurately`() {
     val proto = Matcher.newBuilder()
-      .setValueMatcher(ValueMatcherProto.newBuilder().setInt64Value(50L))
+      .setValueMatcher(ValueMatcher.newBuilder().setInt64Value(50L))
       .build()
     val matcher = KMatcher.compile<Long>(proto)
 
@@ -35,7 +35,7 @@ class ValueMatcherTest {
   @Test
   fun `StringValueMatcher evaluates variations accurately`() {
     val proto = Matcher.newBuilder()
-      .setValueMatcher(ValueMatcherProto.newBuilder().setStringValue("target"))
+      .setValueMatcher(ValueMatcher.newBuilder().setStringValue("target"))
       .build()
     val matcher = KMatcher.compile<String>(proto)
 
@@ -46,7 +46,7 @@ class ValueMatcherTest {
   @Test
   fun `BoolValueMatcher evaluates variations accurately`() {
     val proto = Matcher.newBuilder()
-      .setValueMatcher(ValueMatcherProto.newBuilder().setBoolValue(true))
+      .setValueMatcher(ValueMatcher.newBuilder().setBoolValue(true))
       .build()
     val matcher = KMatcher.compile<Boolean>(proto)
 
@@ -57,7 +57,7 @@ class ValueMatcherTest {
   @Test
   fun `EnumValueMatcher extracts numbers using real TestEnum instances`() {
     val proto = Matcher.newBuilder()
-      .setValueMatcher(ValueMatcherProto.newBuilder().setEnumValue(2))
+      .setValueMatcher(ValueMatcher.newBuilder().setEnumValue(2))
       .build()
     val matcher = KMatcher.compile<TestEnum>(proto)
 

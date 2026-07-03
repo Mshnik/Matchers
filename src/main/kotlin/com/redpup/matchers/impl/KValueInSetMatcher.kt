@@ -7,11 +7,11 @@ import com.redpup.matchers.proto.ValueInSetMatcher.ValuesCase
 import kotlin.reflect.KClass
 
 /** The implementation for [com.redpup.matchers.proto.ValueInSetMatcher]. */
-internal sealed class ValueInSetMatcher<in T : Any>(expectedClass: KClass<T>, proto: Matcher) :
+internal sealed class KValueInSetMatcher<in T : Any>(expectedClass: KClass<T>, proto: Matcher) :
   KMatcher<T>(expectedClass, proto) {
 
   companion object {
-    /** Compiles [proto] into a [ValueInSetMatcher] tailored exactly to [expectedClass]. */
+    /** Compiles [proto] into a [KValueInSetMatcher] tailored exactly to [expectedClass]. */
     fun <T : Any> compile(proto: Matcher, expectedClass: KClass<T>): KMatcher<T> {
       check(proto.hasValueInSetMatcher()) { "Expected ValueInSetMatcher proto, found $proto" }
 
@@ -19,22 +19,22 @@ internal sealed class ValueInSetMatcher<in T : Any>(expectedClass: KClass<T>, pr
 
       val matcher: KMatcher<*> = when {
         EnumLite::class.java.isAssignableFrom(expectedClass.java)
-          && case == ValuesCase.ENUM_VALUES -> EnumValueInSetMatcher(proto).transform<EnumLite> { it.number }
+          && case == ValuesCase.ENUM_VALUES -> EnumKValueInSetMatcher(proto).transform<EnumLite> { it.number }
 
         expectedClass == Int::class
-          && case == ValuesCase.INT32_VALUES -> Int32ValueInSetMatcher(proto)
+          && case == ValuesCase.INT32_VALUES -> Int32KValueInSetMatcher(proto)
 
         expectedClass == Long::class
-          && case == ValuesCase.INT64_VALUES -> Int64ValueInSetMatcher(proto)
+          && case == ValuesCase.INT64_VALUES -> Int64KValueInSetMatcher(proto)
 
         expectedClass == Float::class
-          && case == ValuesCase.FLOAT_VALUES -> FloatValueInSetMatcher(proto)
+          && case == ValuesCase.FLOAT_VALUES -> FloatKValueInSetMatcher(proto)
 
         expectedClass == Double::class
-          && case == ValuesCase.DOUBLE_VALUES -> DoubleValueInSetMatcher(proto)
+          && case == ValuesCase.DOUBLE_VALUES -> DoubleKValueInSetMatcher(proto)
 
         expectedClass == String::class
-          && case == ValuesCase.STRING_VALUES -> StringValueInSetMatcher(proto)
+          && case == ValuesCase.STRING_VALUES -> StringKValueInSetMatcher(proto)
 
         case == ValuesCase.VALUES_NOT_SET ->
           throw IllegalArgumentException("ValueInSetMatcher has no values set: $proto")
@@ -49,51 +49,51 @@ internal sealed class ValueInSetMatcher<in T : Any>(expectedClass: KClass<T>, pr
       return matcher as KMatcher<T>
     }
 
-    /** Compiles [proto] into a [ValueInSetMatcher]. */
+    /** Compiles [proto] into a [KValueInSetMatcher]. */
     inline fun <reified T : Any> compile(proto: Matcher): KMatcher<T> = compile(proto, T::class)
   }
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueInSetMatcher] on Ints. */
-private class Int32ValueInSetMatcher(proto: Matcher) : ValueInSetMatcher<Int>(Int::class, proto) {
+private class Int32KValueInSetMatcher(proto: Matcher) : KValueInSetMatcher<Int>(Int::class, proto) {
   private val set: Set<Int> = proto.valueInSetMatcher.int32Values.valuesList.toSet()
 
   override fun matchTyped(value: Int): Boolean = set.contains(value)
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueInSetMatcher] on Longs. */
-private class Int64ValueInSetMatcher(proto: Matcher) : ValueInSetMatcher<Long>(Long::class, proto) {
+private class Int64KValueInSetMatcher(proto: Matcher) : KValueInSetMatcher<Long>(Long::class, proto) {
   private val set: Set<Long> = proto.valueInSetMatcher.int64Values.valuesList.toSet()
 
   override fun matchTyped(value: Long): Boolean = set.contains(value)
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueInSetMatcher] on Floats. */
-private class FloatValueInSetMatcher(proto: Matcher) :
-  ValueInSetMatcher<Float>(Float::class, proto) {
+private class FloatKValueInSetMatcher(proto: Matcher) :
+  KValueInSetMatcher<Float>(Float::class, proto) {
   private val set: Set<Float> = proto.valueInSetMatcher.floatValues.valuesList.toSet()
 
   override fun matchTyped(value: Float): Boolean = set.contains(value)
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueInSetMatcher] on Double. */
-private class DoubleValueInSetMatcher(proto: Matcher) :
-  ValueInSetMatcher<Double>(Double::class, proto) {
+private class DoubleKValueInSetMatcher(proto: Matcher) :
+  KValueInSetMatcher<Double>(Double::class, proto) {
   private val set: Set<Double> = proto.valueInSetMatcher.doubleValues.valuesList.toSet()
 
   override fun matchTyped(value: Double): Boolean = set.contains(value)
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueInSetMatcher] on String. */
-private class StringValueInSetMatcher(proto: Matcher) :
-  ValueInSetMatcher<String>(String::class, proto) {
+private class StringKValueInSetMatcher(proto: Matcher) :
+  KValueInSetMatcher<String>(String::class, proto) {
   private val set: Set<String> = proto.valueInSetMatcher.stringValues.valuesList.toSet()
 
   override fun matchTyped(value: String): Boolean = set.contains(value)
 }
 
 /** The implementation for [com.redpup.matchers.proto.ValueInSetMatcher] on Enums. */
-private class EnumValueInSetMatcher(proto: Matcher) : ValueInSetMatcher<Int>(Int::class, proto) {
+private class EnumKValueInSetMatcher(proto: Matcher) : KValueInSetMatcher<Int>(Int::class, proto) {
   private val set: Set<Int> = proto.valueInSetMatcher.enumValues.valuesList.toSet()
 
   override fun matchTyped(value: Int): Boolean = set.contains(value)

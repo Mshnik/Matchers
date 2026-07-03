@@ -12,7 +12,7 @@ import com.redpup.matchers.proto.MessageMatcher.FieldMatcher
 import kotlin.reflect.KClass
 
 /** The compiled implementation of [com.redpup.matchers.proto.MessageMatcher]. */
-class MessageMatcher<in T : Message>(
+class KMessageMatcher<in T : Message>(
   proto: Matcher,
   expectedClass: KClass<T>,
   instance: T,
@@ -27,17 +27,17 @@ class MessageMatcher<in T : Message>(
   override fun matchTyped(value: T): Boolean = fields.all { it.value.match(value.getField(it.key)) }
 
   companion object {
-    /** Compiles [proto] into a [MessageMatcher] tailored exactly to [expectedClass]. */
-    fun <T : Message> compile(proto: Matcher, expectedClass: KClass<T>): MessageMatcher<T> {
+    /** Compiles [proto] into a [KMessageMatcher] tailored exactly to [expectedClass]. */
+    fun <T : Message> compile(proto: Matcher, expectedClass: KClass<T>): KMessageMatcher<T> {
       val defaultInstanceMethod = expectedClass.java.getMethod("getDefaultInstance")
 
       @Suppress("UNCHECKED_CAST")
       val instance = defaultInstanceMethod.invoke(null) as T
-      return MessageMatcher(proto, expectedClass, instance)
+      return KMessageMatcher(proto, expectedClass, instance)
     }
 
-    /** Compiles [proto] into a [MessageMatcher]. */
-    inline fun <reified T : Message> compile(proto: Matcher): MessageMatcher<T> =
+    /** Compiles [proto] into a [KMessageMatcher]. */
+    inline fun <reified T : Message> compile(proto: Matcher): KMessageMatcher<T> =
       compile(proto, T::class)
 
     /** Returns the [FieldDescriptor] for this inside [descriptor], or throws if not found. */
