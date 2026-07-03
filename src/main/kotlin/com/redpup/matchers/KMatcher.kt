@@ -1,5 +1,6 @@
 package com.redpup.matchers
 
+import com.google.protobuf.Message
 import com.redpup.matchers.impl.*
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.Matcher.MatcherCase
@@ -53,11 +54,21 @@ abstract class KMatcher<in T : Any>(
         MatcherCase.VALUE_MATCHER -> ValueMatcher.compile(matcher, expectedClass)
         MatcherCase.VALUE_IN_SET_MATCHER -> ValueInSetMatcher.compile(matcher, expectedClass)
         MatcherCase.STRING_MATCHER -> {
-          check(expectedClass == String::class) { "Expected String class, found $expectedClass" }
+          check(expectedClass == String::class) {
+            "Expected String class, found $expectedClass"
+          }
           @Suppress("UNCHECKED_CAST") // Safe after above validation.
           StringMatcher.compile(matcher) as KMatcher<T>
         }
-        // MatcherCase.MESSAGE_MATCHER -> MessageMatcher.compile(matcher)
+
+        MatcherCase.MESSAGE_MATCHER -> {
+          check(expectedClass.java.isAssignableFrom(Message::class.java)) {
+            "Expected subtype of Message, found $expectedClass"
+          }
+          @Suppress("UNCHECKED_CAST") // Safe after above validation.
+          MessageMatcher.compile(matcher, expectedClass as KClass<Message>) as KMatcher<T>
+        }
+
         MatcherCase.COMBINING_MATCHER -> CombiningMatcher(matcher, expectedClass)
         MatcherCase.MATCHER_NOT_SET -> throw IllegalArgumentException("Unsupported matcher: $matcher")
         null -> throw NullPointerException()

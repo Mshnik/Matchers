@@ -1,6 +1,6 @@
 package com.redpup.matchers.impl
 
-import com.google.protobuf.ProtocolMessageEnum
+import com.google.protobuf.Internal.EnumLite
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.ValueInSetMatcher.ValuesCase
@@ -11,15 +11,15 @@ internal sealed class ValueInSetMatcher<in T : Any>(expectedClass: KClass<T>, pr
   KMatcher<T>(expectedClass, proto) {
 
   companion object {
-    /** Compiles [proto] into a [KMatcher] tailored exactly to [expectedClass]. */
+    /** Compiles [proto] into a [ValueInSetMatcher] tailored exactly to [expectedClass]. */
     fun <T : Any> compile(proto: Matcher, expectedClass: KClass<T>): KMatcher<T> {
       check(proto.hasValueInSetMatcher()) { "Expected ValueInSetMatcher proto, found $proto" }
 
       val case = proto.valueInSetMatcher.valuesCase
 
       val matcher: KMatcher<*> = when {
-        ProtocolMessageEnum::class.java.isAssignableFrom(expectedClass.java)
-          && case == ValuesCase.ENUM_VALUES -> EnumValueInSetMatcher(proto).transform<ProtocolMessageEnum> { it.number }
+        EnumLite::class.java.isAssignableFrom(expectedClass.java)
+          && case == ValuesCase.ENUM_VALUES -> EnumValueInSetMatcher(proto).transform<EnumLite> { it.number }
 
         expectedClass == Int::class
           && case == ValuesCase.INT32_VALUES -> Int32ValueInSetMatcher(proto)

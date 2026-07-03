@@ -1,5 +1,8 @@
 package com.redpup.matchers.impl
 
+import com.google.protobuf.Descriptors
+import com.google.protobuf.Internal
+import com.google.protobuf.Internal.EnumLite
 import com.google.protobuf.ProtocolMessageEnum
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
@@ -11,14 +14,14 @@ internal sealed class ValueMatcher<in T : Any>(expectedClass: KClass<T>, proto: 
   KMatcher<T>(expectedClass, proto) {
 
   companion object {
-    /** Compiles [proto] into a [KMatcher] tailored exactly to [expectedClass]. */
+    /** Compiles [proto] into a [ValueMatcher] tailored exactly to [expectedClass]. */
     fun <T : Any> compile(proto: Matcher, expectedClass: KClass<T>): KMatcher<T> {
       check(proto.hasValueMatcher()) { "Expected ValueMatcher proto, found $proto" }
 
       val case = proto.valueMatcher.valueCase
       val matcher: KMatcher<*> = when {
-        ProtocolMessageEnum::class.java.isAssignableFrom(expectedClass.java)
-          && case == ValueCase.ENUM_VALUE -> EnumValueMatcher(proto).transform<ProtocolMessageEnum> { it.number }
+        EnumLite::class.java.isAssignableFrom(expectedClass.java)
+          && case == ValueCase.ENUM_VALUE -> EnumValueMatcher(proto).transform<EnumLite> { it.number }
 
         expectedClass == Boolean::class && case == ValueCase.BOOL_VALUE -> BooleanValueMatcher(proto)
         expectedClass == Int::class && case == ValueCase.INT32_VALUE -> Int32ValueMatcher(proto)

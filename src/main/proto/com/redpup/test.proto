@@ -6,12 +6,12 @@ option java_multiple_files = true;
 option java_package = "com.redpup.proto";
 
 message TestMessage {
-  int32 bool_value = 1;
+  bool bool_value = 1;
   int32 int32_value = 2;
-  int32 int64_value = 3;
-  int32 float_value = 4;
-  int32 double_value = 5;
-  int32 string_value = 6;
+  int64 int64_value = 3;
+  float float_value = 4;
+  double double_value = 5;
+  string string_value = 6;
   TestEnum enum_value = 7;
 }
 
