@@ -1,9 +1,9 @@
 package com.redpup.matchers.impl
 
-import com.redpup.proto.TestEnum
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.ValueInSetMatcher as ValueInSetMatcherProto
+import com.redpup.proto.TestEnum
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -12,7 +12,8 @@ class ValueInSetMatcherTest {
 
   @Test
   fun `Int32ValueInSetMatcher evaluates set membership accurately`() {
-    val intSet = ValueInSetMatcherProto.Int32ValueSet.newBuilder().addAllValues(listOf(10, 20, 30)).build()
+    val intSet =
+      ValueInSetMatcherProto.Int32ValueSet.newBuilder().addAllValues(listOf(10, 20, 30)).build()
     val proto = Matcher.newBuilder()
       .setValueInSetMatcher(ValueInSetMatcherProto.newBuilder().setInt32Values(intSet))
       .build()
@@ -23,8 +24,22 @@ class ValueInSetMatcherTest {
   }
 
   @Test
+  fun `Int64ValueInSetMatcher evaluates set membership accurately`() {
+    val longSet =
+      ValueInSetMatcherProto.Int64ValueSet.newBuilder().addAllValues(listOf(10L, 20L, 30L)).build()
+    val proto = Matcher.newBuilder()
+      .setValueInSetMatcher(ValueInSetMatcherProto.newBuilder().setInt64Values(longSet))
+      .build()
+    val matcher = KMatcher.compile<Long>(proto)
+
+    assertTrue(matcher.match(20L))
+    assertFalse(matcher.match(15L))
+  }
+
+  @Test
   fun `StringValueInSetMatcher evaluates set membership accurately`() {
-    val stringSet = ValueInSetMatcherProto.StringValueSet.newBuilder().addAllValues(listOf("A", "B")).build()
+    val stringSet =
+      ValueInSetMatcherProto.StringValueSet.newBuilder().addAllValues(listOf("A", "B")).build()
     val proto = Matcher.newBuilder()
       .setValueInSetMatcher(ValueInSetMatcherProto.newBuilder().setStringValues(stringSet))
       .build()
@@ -37,7 +52,8 @@ class ValueInSetMatcherTest {
   @Test
   fun `EnumValueInSetMatcher maps and evaluates set membership for TestEnum`() {
     // Map the int32 internal backing set to evaluate enum numbers
-    val enumSet = ValueInSetMatcherProto.Int32ValueSet.newBuilder().addAllValues(listOf(1, 2)).build()
+    val enumSet =
+      ValueInSetMatcherProto.Int32ValueSet.newBuilder().addAllValues(listOf(1, 2)).build()
     val proto = Matcher.newBuilder()
       .setValueInSetMatcher(ValueInSetMatcherProto.newBuilder().setEnumValues(enumSet))
       .build()
