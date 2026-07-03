@@ -62,7 +62,7 @@ abstract class KMatcher<in T : Any>(
         }
 
         MatcherCase.MESSAGE_MATCHER -> {
-          check(expectedClass.java.isAssignableFrom(Message::class.java)) {
+          check(Message::class.java.isAssignableFrom(expectedClass.java)) {
             "Expected subtype of Message, found $expectedClass"
           }
           @Suppress("UNCHECKED_CAST") // Safe after above validation.

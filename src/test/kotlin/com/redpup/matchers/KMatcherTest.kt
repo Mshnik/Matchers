@@ -1,7 +1,11 @@
 package com.redpup.matchers
 
 import com.redpup.matchers.KMatcher.Companion.typed
+import com.redpup.matchers.proto.CombiningMatcher
 import com.redpup.matchers.proto.Matcher
+import com.redpup.matchers.proto.MessageMatcher
+import com.redpup.matchers.proto.StringMatcher
+import com.redpup.matchers.testing.proto.TestMessage
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -62,5 +66,89 @@ class KMatcherTest {
     assertThrows<IllegalArgumentException> {
       KMatcher.compile<Any>(emptyProto)
     }
+  }
+
+  // --- Expanded Integration Router Verification ---
+
+  @Test
+  fun `compile routes constant matchers successfully regardless of target class type`() {
+    val proto = Matcher.newBuilder().setConstantMatcher(true).build()
+
+    val matcher = KMatcher.compile<Int>(proto)
+
+    assertEquals(Any::class, matcher.expectedClass)
+    assertTrue(matcher.match(42))
+  }
+
+  @Test
+  fun `compile routes string matchers successfully when targeted against string type`() {
+    val proto = Matcher.newBuilder()
+      .setStringMatcher(StringMatcher.newBuilder().setValue("target"))
+      .build()
+
+    val matcher = KMatcher.compile<String>(proto)
+
+    assertEquals(String::class, matcher.expectedClass)
+  }
+
+  @Test
+  fun `compile throws IllegalStateException when string matcher is assigned to non string targets`() {
+    val proto = Matcher.newBuilder()
+      .setStringMatcher(StringMatcher.newBuilder().setValue("target"))
+      .build()
+
+    val exception = assertThrows<IllegalStateException> {
+      KMatcher.compile<Int>(proto) // Int class requested for a StringMatcher
+    }
+    assertTrue(exception.message!!.contains("Expected String class"))
+  }
+
+  @Test
+  fun `compile routes message matchers successfully when targeted against message subtypes`() {
+    val proto = Matcher.newBuilder()
+      .setMessageMatcher(MessageMatcher.newBuilder().setMessageName("com.redpup.TestMessage"))
+      .build()
+
+    val matcher = KMatcher.compile<TestMessage>(proto)
+
+    assertEquals(TestMessage::class, matcher.expectedClass)
+  }
+
+  @Test
+  fun `compile throws IllegalStateException when message matcher is assigned to non message targets`() {
+    val proto = Matcher.newBuilder()
+      .setMessageMatcher(MessageMatcher.newBuilder().setMessageName("com.redpup.TestMessage"))
+      .build()
+
+    val exception = assertThrows<IllegalStateException> {
+      KMatcher.compile<String>(proto) // String class requested for a MessageMatcher
+    }
+    assertTrue(exception.message!!.contains("Expected subtype of Message"))
+  }
+
+  @Test
+  fun `compile routes combining matchers successfully and preserves expected type boundaries`() {
+    val proto = Matcher.newBuilder()
+      .setCombiningMatcher(
+        CombiningMatcher.newBuilder()
+          .setCombine(CombiningMatcher.Combine.COMBINE_ALL)
+          .addMatchers(Matcher.newBuilder().setConstantMatcher(true))
+      ).build()
+
+    val matcher = KMatcher.compile<Double>(proto)
+
+    assertEquals(Double::class, matcher.expectedClass)
+    assertTrue(matcher.match(3.14))
+  }
+
+  @Test
+  fun `proto dynamic accessor correctly triggers buildProto lazily`() {
+    val matcher = ConcreteTestMatcher(String::class)
+
+    val generatedProto = matcher.proto
+
+    assertNotNull(generatedProto)
+    assertTrue(generatedProto.hasConstantMatcher())
+    assertTrue(generatedProto.constantMatcher)
   }
 }
