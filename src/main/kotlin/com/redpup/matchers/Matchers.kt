@@ -40,53 +40,53 @@ object MatcherFactory {
 class MessageMatcherBuilder(private val descriptor: Descriptor) {
   private val builder = MessageMatcher.newBuilder().setMessageName(descriptor.fullName)
 
-  /** Adds a [FieldMatcher] to this builder on a single field for the given [fieldDescriptor]. */
-  fun singleField(fieldDescriptor: FieldDescriptor, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldDescriptor, FieldMatchType.SINGLE_FIELD, block)
+  /** Adds a [FieldMatcher] to this builder on a single field for this field. */
+  fun FieldDescriptor.matches(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.SINGLE_FIELD, block)
 
-  /** Adds a [FieldMatcher] to this builder on a single field for the given [fieldName]. */
-  fun singleField(fieldName: String, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldName, FieldMatchType.SINGLE_FIELD, block)
+  /** Adds a [FieldMatcher] to this builder on a single field for this field. */
+  fun String.matches(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.SINGLE_FIELD, block)
 
-  /** Adds a [FieldMatcher] to this builder on a single field for the given [fieldNumber]. */
-  fun singleField(fieldNumber: Int, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldNumber, FieldMatchType.SINGLE_FIELD, block)
+  /** Adds a [FieldMatcher] to this builder on a single field for this field. */
+  fun Int.matches(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.SINGLE_FIELD, block)
 
-  /** Adds a [FieldMatcher] to this builder on a repeated any field for the given [fieldDescriptor]. */
-  fun repeatedFieldAny(fieldDescriptor: FieldDescriptor, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldDescriptor, FieldMatchType.REPEATED_FIELD_ANY, block)
+  /** Adds a [FieldMatcher] to this builder on a repeated any field for this field. */
+  fun FieldDescriptor.any(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ANY, block)
 
-  /** Adds a [FieldMatcher] to this builder on a repeated any field for the given [fieldName]. */
-  fun repeatedFieldAny(fieldName: String, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldName, FieldMatchType.REPEATED_FIELD_ANY, block)
+  /** Adds a [FieldMatcher] to this builder on a repeated any field for this field. */
+  fun String.any(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ANY, block)
 
-  /** Adds a [FieldMatcher] to this builder on a repeated any field for the given [fieldNumber]. */
-  fun repeatedFieldAny(fieldNumber: Int, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldNumber, FieldMatchType.REPEATED_FIELD_ANY, block)
+  /** Adds a [FieldMatcher] to this builder on a repeated any field for this field. */
+  fun Int.any(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ANY, block)
 
-  /** Adds a [FieldMatcher] to this builder on a repeated all field for the given [fieldDescriptor]. */
-  fun repeatedFieldAll(fieldDescriptor: FieldDescriptor, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldDescriptor, FieldMatchType.REPEATED_FIELD_ALL, block)
+  /** Adds a [FieldMatcher] to this builder on a repeated all field for this field. */
+  fun FieldDescriptor.all(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ALL, block)
 
-  /** Adds a [FieldMatcher] to this builder on a repeated all field for the given [fieldName]. */
-  fun repeatedFieldAll(fieldName: String, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldName, FieldMatchType.REPEATED_FIELD_ALL, block)
+  /** Adds a [FieldMatcher] to this builder on a repeated all field for this field. */
+  fun String.all(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ALL, block)
 
-  /** Adds a [FieldMatcher] to this builder on a repeated all field for the given [fieldNumber]. */
-  fun repeatedFieldAll(fieldNumber: Int, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldNumber, FieldMatchType.REPEATED_FIELD_ALL, block)
+  /** Adds a [FieldMatcher] to this builder on a repeated all field for this field. */
+  fun Int.all(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ALL, block)
 
-  /** Adds a [FieldMatcher] to this builder on a repeated none field for the given [fieldDescriptor]. */
-  fun repeatedFieldNone(fieldDescriptor: FieldDescriptor, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldDescriptor, FieldMatchType.REPEATED_FIELD_NONE, block)
+  /** Adds a [FieldMatcher] to this builder on a repeated none field for this field. */
+  fun FieldDescriptor.none(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.REPEATED_FIELD_NONE, block)
 
-  /** Adds a [FieldMatcher] to this builder on a repeated none field for the given [fieldName]. */
-  fun repeatedFieldNone(fieldName: String, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldName, FieldMatchType.REPEATED_FIELD_NONE, block)
+  /** Adds a [FieldMatcher] to this builder on a repeated none field for this field. */
+  fun String.repeatedFieldNone(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.REPEATED_FIELD_NONE, block)
 
-  /** Adds a [FieldMatcher] to this builder on a repeated none field for the given [fieldNumber]. */
-  fun repeatedFieldNone(fieldNumber: Int, block: Matcher.Builder.() -> Unit) =
-    addFieldRule(fieldNumber, FieldMatchType.REPEATED_FIELD_NONE, block)
+  /** Adds a [FieldMatcher] to this builder on a repeated none field for this field. */
+  fun Int.repeatedFieldNone(block: Matcher.Builder.() -> Unit) =
+    addFieldRule(this, FieldMatchType.REPEATED_FIELD_NONE, block)
 
 
   /** Adds a [FieldMatcher] to this builder on the given [fieldDescriptor] with the given [matchType]. */

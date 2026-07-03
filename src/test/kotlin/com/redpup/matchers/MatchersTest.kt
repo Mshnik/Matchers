@@ -37,7 +37,7 @@ class MatcherDslTest {
 
     // 2. Build using your new Kotlin Custom DSL
     val actual = Matcher.newBuilder().messageMatcher(descriptor) {
-      singleField("int32_value") {
+      "int32_value".matches {
         valueMatcherBuilder.setInt32Value(42)
       }
     }.build()
@@ -75,12 +75,11 @@ class MatcherDslTest {
 
     val actual = Matcher.newBuilder().messageMatcher(descriptor) {
       // Test string lookup strategy
-      repeatedFieldAny("int32_values") { constantMatcher = true }
+      "int32_values".any { constantMatcher = true }
       // Test integer number lookup strategy
-      repeatedFieldAll(8) { constantMatcher = true }
+      8.all { constantMatcher = true }
       // Test explicit FieldDescriptor lookup strategy
-      val fieldDesc = descriptor.findFieldByNumber(8)
-      repeatedFieldNone(fieldDesc) { constantMatcher = true }
+      descriptor.findFieldByNumber(8).none { constantMatcher = true }
     }.build()
 
     assertThat(actual).isEqualTo(expected)
@@ -99,7 +98,7 @@ class MatcherDslTest {
     }
 
     val actualFreestanding = messageMatcher(descriptor) {
-      singleField(1) { constantMatcher = false }
+      1.matches { constantMatcher = false }
     }
 
     assertThat(actualFreestanding).isEqualTo(expectedFreestanding)
@@ -109,7 +108,7 @@ class MatcherDslTest {
   fun `dsl validation triggers exception when unknown named properties are targeted`() {
     val exception = assertThrows<IllegalArgumentException> {
       messageMatcher(descriptor) {
-        singleField("non_existent_field") { constantMatcher = true }
+        "non_existent_field".matches { constantMatcher = true }
       }
     }
     assertThat(exception).hasMessageThat().contains("Field 'non_existent_field' not found")

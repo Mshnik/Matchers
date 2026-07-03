@@ -6,6 +6,7 @@ import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.MessageMatcher
 import com.redpup.matchers.proto.StringMatcher
 import com.redpup.matchers.testing.proto.TestMessage
+import kotlin.reflect.KClass
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -14,7 +15,7 @@ class KMatcherTest {
 
   // A minimal concrete subclass to test base KMatcher architecture without mocks
   private class ConcreteTestMatcher(
-    expected: kotlin.reflect.KClass<String>,
+    expected: KClass<String>,
   ) : KMatcher<String>(expected) {
     override fun matchTyped(value: String): Boolean = value == "match"
     override fun buildProto(): Matcher = Matcher.newBuilder().setConstantMatcher(true).build()
@@ -67,8 +68,6 @@ class KMatcherTest {
       KMatcher.compile<Any>(emptyProto)
     }
   }
-
-  // --- Expanded Integration Router Verification ---
 
   @Test
   fun `compile routes constant matchers successfully regardless of target class type`() {
