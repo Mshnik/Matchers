@@ -3,7 +3,7 @@ package com.redpup.matchers.impl
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.ValueInSetMatcher
-import com.redpup.proto.TestEnum
+import com.redpup.matchers.testing.proto.TestEnum
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

@@ -3,8 +3,8 @@ package com.redpup.matchers.impl
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.MessageMatcher
 import com.redpup.matchers.proto.ValueMatcher
-import com.redpup.proto.TestEnum
-import com.redpup.proto.TestMessage
+import com.redpup.matchers.testing.proto.TestEnum
+import com.redpup.matchers.testing.proto.TestMessage
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

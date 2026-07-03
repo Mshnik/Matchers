@@ -1,7 +1,7 @@
-package com.redpup
+package com.redpup.matchers.testing
 
 import com.google.common.truth.Truth.assertThat
-import com.redpup.proto.testMessage
+import com.redpup.matchers.testing.proto.testMessage
 import kotlin.test.Test
 
 /** Unit test to check proto compilation and creation. */
