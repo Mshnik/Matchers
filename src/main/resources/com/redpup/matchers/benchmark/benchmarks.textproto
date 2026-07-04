@@ -1,9 +1,273 @@
 # proto-file: com/redpup/matchers/benchmark/benchmark.proto
 # proto-message: MatcherBenchmarks
+# =============================================================================
+# 1. VALUEMATCHER SCENARIOS (Direct Primitive Equality Checks)
+# =============================================================================
 
-# Case 1: Basic Numeric and String Primitives via MessageMatcher
 benchmark {
-  name: "primitive_numeric_and_string"
+  name: "vm_bool"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "bool_value"
+        matcher {
+          value_matcher {
+            bool_value: true }
+        }
+      }
+    }
+  }
+  input { bool_value: true }         # Best: Instant Match
+  input { bool_value: true }         # Avg: (Same for primitives)
+  input { bool_value: false }        # Worst: Evaluation Mismatch
+}
+
+benchmark {
+  name: "vm_int32"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "int32_value"
+        matcher {
+          value_matcher {
+            int32_value: 42 }
+        }
+      }
+    }
+  }
+  input { int32_value: 42 }
+  input { int32_value: 42 }
+  input { int32_value: 0 }
+}
+
+benchmark {
+  name: "vm_int64"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "int64_value"
+        matcher {
+          value_matcher {
+            int64_value: 99999 }
+        }
+      }
+    }
+  }
+  input { int64_value: 99999 }
+  input { int64_value: 99999 }
+  input { int64_value: -1 }
+}
+
+benchmark {
+  name: "vm_float"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "float_value"
+        matcher {
+          value_matcher {
+            float_value: 3.14 }
+        }
+      }
+    }
+  }
+  input { float_value: 3.14 }
+  input { float_value: 3.14 }
+  input { float_value: 0.0 }
+}
+
+benchmark {
+  name: "vm_double"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "double_value"
+        matcher {
+          value_matcher {
+            double_value: 2.71828 }
+        }
+      }
+    }
+  }
+  input { double_value: 2.71828 }
+  input { double_value: 2.71828 }
+  input { double_value: 1.0 }
+}
+
+benchmark {
+  name: "vm_string"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "string_value"
+        matcher {
+          value_matcher {
+            string_value: "target"
+          }
+        }
+      }
+    }
+  }
+  input { string_value: "target" }
+  input { string_value: "target" }
+  input { string_value: "mismatch" }
+}
+
+benchmark {
+  name: "vm_enum"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "enum_value"
+        matcher {
+          value_matcher {
+            enum_value: 1 }
+        }
+      }
+    }
+  }
+  input { enum_value: TEST_ENUM_1 }
+  input { enum_value: TEST_ENUM_1 }
+  input { enum_value: TEST_ENUM_2 }
+}
+
+# =============================================================================
+# 2. VALUEINSETMATCHER SCENARIOS (Hashed Lookup Sets)
+# =============================================================================
+
+benchmark {
+  name: "vis_int32"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "int32_value"
+        matcher {
+          value_in_set_matcher {
+            int32_values { values: 10 values: 20 values: 30 }
+          }
+        }
+      }
+    }
+  }
+  input { int32_value: 10 }          # Best: Found early / instant lookup
+  input { int32_value: 20 }          # Avg: Found mid-set
+  input { int32_value: 99 }          # Worst: Miss (scans entire internal hash state bucket)
+}
+
+benchmark {
+  name: "vis_int64"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "int64_value"
+        matcher {
+          value_in_set_matcher {
+            int64_values { values: 100 values: 200 }
+          }
+        }
+      }
+    }
+  }
+  input { int64_value: 100 }
+  input { int64_value: 200 }
+  input { int64_value: -1 }
+}
+
+benchmark {
+  name: "vis_float"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "float_value"
+        matcher {
+          value_in_set_matcher {
+            float_values { values: 1.1 values: 2.2 }
+          }
+        }
+      }
+    }
+  }
+  input { float_value: 1.1 }
+  input { float_value: 2.2 }
+  input { float_value: 0.0 }
+}
+
+benchmark {
+  name: "vis_double"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "double_value"
+        matcher {
+          value_in_set_matcher {
+            double_values { values: 1.11 values: 2.22 }
+          }
+        }
+      }
+    }
+  }
+  input { double_value: 1.11 }
+  input { double_value: 2.22 }
+  input { double_value: 0.0 }
+}
+
+benchmark {
+  name: "vis_string"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "string_value"
+        matcher {
+          value_in_set_matcher {
+            string_values { values: "apple" values: "banana" values: "cherry" }
+          }
+        }
+      }
+    }
+  }
+  input { string_value: "apple" }
+  input { string_value: "banana" }
+  input { string_value: "orange" }
+}
+
+benchmark {
+  name: "vis_enum"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "enum_value"
+        matcher {
+          value_in_set_matcher {
+            enum_values { values: 1 values: 2 }
+          }
+        }
+      }
+    }
+  }
+  input { enum_value: TEST_ENUM_1 }
+  input { enum_value: TEST_ENUM_2 }
+  input { enum_value: TEST_ENUM_DEFAULT }
+}
+
+# =============================================================================
+# 3. STRINGMATCHER SCENARIOS (String Strategy Operations)
+# =============================================================================
+
+benchmark {
+  name: "sm_value"
   matcher {
     message_matcher {
       message_name: "com.redpup.matchers.testing.proto.TestMessage"
@@ -12,37 +276,266 @@ benchmark {
         matcher {
           string_matcher {
             case_sensitive: CASE_SENSITIVE
-            value: "active"
+            value: "RedPupGames"
           }
         }
       }
+    }
+  }
+  input { string_value: "RedPupGames" }   # Best: Exact match
+  input { string_value: "RedPupGames" }   # Avg: Exact match
+  input { string_value: "Redpupgames" }   # Worst: Full check down to character case divergence
+}
+
+benchmark {
+  name: "sm_starts_with"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
       fields {
-        field_name: "int32_value"
+        field_name: "string_value"
         matcher {
-          not_matcher {
-            value_matcher {
-              int32_value: 0
+          string_matcher {
+            case_sensitive: CASE_SENSITIVE
+            starts_with: "PREFIX_"
+          }
+        }
+      }
+    }
+  }
+  input { string_value: "PREFIX_instant" } # Best: Matches immediately
+  input { string_value: "PREF_mismatch" }  # Avg: Fails early in character sequence comparison
+  input { string_value: "PREFI_mismatch" } # Worst: Fails on the very last character of prefix boundary
+}
+
+benchmark {
+  name: "sm_ends_with"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "string_value"
+        matcher {
+          string_matcher {
+            case_sensitive: CASE_SENSITIVE
+            ends_with: "_SUFFIX"
+          }
+        }
+      }
+    }
+  }
+  input { string_value: "instant_SUFFIX" } # Best: Matched length + ending quickly verified
+  input { string_value: "short" }          # Avg: Length mismatch shortcut failure
+  input { string_value: "long_str_SUFFI" } # Worst: Scans backwards and fails on final string boundary character
+}
+
+benchmark {
+  name: "sm_contains"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "string_value"
+        matcher {
+          string_matcher {
+            case_sensitive: CASE_SENSITIVE
+            contains: "TARGET"
+          }
+        }
+      }
+    }
+  }
+  input { string_value: "TARGET_at_start" } # Best: Substring match at character index 0
+  input { string_value: "mid_TARGET_mid" }   # Avg: Substring match located halfway through data
+  input { string_value: "completely_empty" } # Worst: Scans long string completely without finding substring
+}
+
+benchmark {
+  name: "sm_pattern"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "string_value"
+        matcher {
+          string_matcher {
+            case_sensitive: CASE_SENSITIVE
+            pattern: "^[A-Z]{3}-[0-9]{3}$"
+          }
+        }
+      }
+    }
+  }
+  input { string_value: "ABC-123" }          # Best: Fast valid match
+  input { string_value: "123-ABC" }          # Avg: Fails regex evaluation loop on first character index
+  input { string_value: "ABC-12A" }          # Worst: Scans complete regex back-reference engine path before failure
+}
+
+# =============================================================================
+# 4. MESSAGEMATCHER (Complex Object Verification)
+# =============================================================================
+
+benchmark {
+  name: "message_matcher_structural"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields { field_name: "bool_value" matcher {
+        value_matcher {
+          bool_value: true }
+      }
+      }
+      fields { field_name: "int32_value" matcher {
+        value_matcher {
+          int32_value: 100 }
+      }
+      }
+      fields { field_name: "string_value" matcher {
+        value_matcher {
+          string_value: "deep" }
+      }
+      }
+    }
+  }
+  input { bool_value: false } # Best: Short-circuit on the very first configured rule field
+  input { bool_value: true int32_value: 0 } # Avg: Evaluates through middle field and drops out
+  input { bool_value: true int32_value: 100 string_value: "deep" } # Worst: Scans every field entry safely to the end
+}
+
+# =============================================================================
+# 5. NOTMATCHER (Boolean Condition Inversion)
+# =============================================================================
+
+benchmark {
+  name: "not_matcher_inversion"
+  matcher {
+    not_matcher {
+      value_matcher {
+        int32_value: 50 }
+    }
+  }
+  input { int32_value: 10 } # Best: Inner matcher immediately returns false -> wrapper yields true
+  input { int32_value: 10 } # Avg: (Primitive evaluation parity)
+  input { int32_value: 50 } # Worst: Forces comprehensive evaluation of underlying sub-block to successful match before flipper
+}
+
+# =============================================================================
+# 6. COLLECTIONMATCHER SCENARIOS (Iterable / Array Evaluators)
+# =============================================================================
+
+benchmark {
+  name: "cm_any"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "int32_values"
+        matcher {
+          collection_matcher {
+            any { value_matcher {
+              int32_value: 7 }
             }
           }
         }
       }
     }
   }
-  # Match Payload
-  input {
-    string_value: "active"
-    int32_value: 42
-  }
-  # Non-Match Payload (Fails immediately on the string match check)
-  input {
-    string_value: "inactive"
-    int32_value: 42
-  }
+  input { int32_values: 7 int32_values: 1 int32_values: 2 } # Best: Item matches at element index 0
+  input { int32_values: 1 int32_values: 7 int32_values: 2 } # Avg: Item matches at midpoint element
+  input { int32_values: 1 int32_values: 2 int32_values: 3 } # Worst: Scans full array without ever matching
 }
 
-# Case 2: Complex Collections via Bipartite Matching (contains_elements)
 benchmark {
-  name: "collection_contains_distinct"
+  name: "cm_all"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "int32_values"
+        matcher {
+          collection_matcher {
+            all { value_matcher {
+              int32_value: 7 }
+            }
+          }
+        }
+      }
+    }
+  }
+  input { int32_values: 1 }                                  # Best: Fails immediately at first item
+  input { int32_values: 7 int32_values: 7 int32_values: 1 } # Avg: Iterates partially through passing items before drop out
+  input { int32_values: 7 int32_values: 7 int32_values: 7 } # Worst: Traverses whole array successfully verifying elements
+}
+
+benchmark {
+  name: "cm_none"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "int32_values"
+        matcher {
+          collection_matcher {
+            none { value_matcher {
+              int32_value: 7
+            }
+            }
+          }
+        }
+      }
+    }
+  }
+  input { int32_values: 7 }                                  # Best: Short circuits immediately on target find
+  input { int32_values: 1 int32_values: 7 }                  # Avg: Short circuits on middle element
+  input { int32_values: 1 int32_values: 2 int32_values: 3 } # Worst: Forces iteration over every item to prove non-existence
+}
+
+benchmark {
+  name: "cm_empty"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "int32_values"
+        matcher {
+          collection_matcher {
+            empty { }
+          }
+        }
+      }
+    }
+  }
+  input { }                                 # Best: Empty array match
+  input { }                                 # Avg: Empty array match
+  input { int32_values: 1 int32_values: 2 } # Worst: Populated collection size lookup failure
+}
+
+benchmark {
+  name: "cm_size"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "int32_values"
+        matcher {
+          collection_matcher {
+            size {
+              value_matcher {
+                int32_value: 3
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  input { int32_values: 1 int32_values: 2 int32_values: 3 } # Best: Matched collection sizing
+  input { int32_values: 1 int32_values: 2 int32_values: 3 } # Avg: Matched collection sizing
+  input { int32_values: 1 }                                  # Worst: Non-matching collection boundary length check
+}
+
+benchmark {
+  name: "cm_contains_elements"
   matcher {
     message_matcher {
       message_name: "com.redpup.matchers.testing.proto.TestMessage"
@@ -53,16 +546,12 @@ benchmark {
             contains_elements {
               matchers {
                 string_matcher {
-                  case_sensitive: CASE_SENSITIVE
-                  starts_with: "prefix_"
+                  starts_with: "a_"
                 }
               }
               matchers {
-                value_in_set_matcher {
-                  string_values {
-                    values: "match_a"
-                    values: "match_b"
-                  }
+                string_matcher {
+                  starts_with: "b_"
                 }
               }
             }
@@ -71,52 +560,60 @@ benchmark {
       }
     }
   }
-  # Match Payload
-  input {
-    string_values: "prefix_test"
-    string_values: "match_b"
-  }
-  # Non-Match Payload (Elements don't meet the bipartite mapping requirement)
-  input {
-    string_values: "prefix_test"
-    string_values: "unrelated_value"
-  }
+  input { string_values: "a_1" string_values: "b_1" } # Best: Fast bipartite assignment mapping
+  input { string_values: "x_1" string_values: "a_1" string_values: "b_1" } # Avg: Minor backtracking check
+  input { string_values: "a_1" string_values: "a_2" string_values: "a_3" } # Worst: Triggers worst-case exponential backtracking loop checks
 }
 
-# Case 3: Deeply Nested Structural Trees (Using message_value recursive loops)
+# =============================================================================
+# 7. COMBININGMATCHER SCENARIOS (Composite Logic Block Trees)
+# =============================================================================
+
 benchmark {
-  name: "nested_message_hierarchy"
+  name: "combine_any"
+  matcher {
+    combining_matcher {
+      combine: COMBINE_ANY
+      matchers {
+        value_matcher {
+          int32_value: 1
+        }
+      }
+      matchers {
+        value_matcher {
+          int32_value: 2
+        }
+      }
+      matchers {
+        value_matcher {
+          int32_value: 3
+        }
+      }
+    }
+  }
+  input { int32_value: 1 } # Best: Hits first sub-matcher and returns true immediately
+  input { int32_value: 2 } # Avg: Hits second sub-matcher
+  input { int32_value: 9 } # Worst: Evaluates every combined query condition block only to fail at the end
+}
+
+benchmark {
+  name: "combine_all"
   matcher {
     message_matcher {
       message_name: "com.redpup.matchers.testing.proto.TestMessage"
       fields {
-        field_name: "message_value"
+        field_name: "int32_value"
         matcher {
-          message_matcher {
-            message_name: "com.redpup.matchers.testing.proto.TestMessage"
-            fields {
-              field_name: "enum_value"
-              matcher {
-                value_matcher {
-                  enum_value: 1 # Maps to TEST_ENUM_1 at runtime
-                }
+          combining_matcher {
+            combine: COMBINE_ALL
+            matchers {
+              value_matcher {
+                int32_value: 10
               }
             }
-            fields {
-              field_name: "message_value"
-              matcher {
-                message_matcher {
-                  message_name: "com.redpup.matchers.testing.proto.TestMessage"
-                  fields {
-                    field_name: "string_value"
-                    matcher {
-                      string_matcher {
-                        case_sensitive: CASE_INSENSITIVE
-                        pattern: "^[0-9a-fA-F]{8}$"
-                      }
-                    }
-                  }
-                }
+            matchers {
+              value_in_set_matcher {
+                int32_values { values: 10 values: 20 }
               }
             }
           }
@@ -124,18 +621,29 @@ benchmark {
       }
     }
   }
-  # Match Payload
-  input {
-    message_value {
-      enum_value: TEST_ENUM_1
-      message_value { string_value: "a1b2c3d4" }
+  input { int32_value: 5 }  # Best: Fails immediately on condition index 0
+  input { int32_value: 5 }  # Avg: Fails early
+  input { int32_value: 10 } # Worst: Forces execution down every single sub-branch validation route
+}
+
+benchmark {
+  name: "combine_none"
+  matcher {
+    combining_matcher {
+      combine: COMBINE_NONE
+      matchers {
+        value_matcher {
+          int32_value: 1
+        }
+      }
+      matchers {
+        value_matcher {
+          int32_value: 2
+        }
+      }
     }
   }
-  # Non-Match Payload (Fails deep leaf node string pattern check)
-  input {
-    message_value {
-      enum_value: TEST_ENUM_1
-      message_value { string_value: "invalid-id" }
-    }
-  }
+  input { int32_value: 1 } # Best: Short circuits immediately on first match
+  input { int32_value: 2 } # Avg: Short circuits on secondary block
+  input { int32_value: 9 } # Worst: Must run through every sub-matcher path completely to guarantee total isolation
 }

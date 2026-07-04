@@ -1,7 +1,7 @@
 package com.redpup.matchers.benchmark
 
 import com.google.protobuf.TextFormat
-import com.redpup.matchers.*
+import com.redpup.matchers.KMatcher
 import com.redpup.matchers.benchmark.proto.MatcherBenchmarks
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.testing.proto.TestMessage
@@ -20,7 +20,37 @@ open class MatcherBenchmark {
 
   // JMH parameter matrix mapping directly to the 'name' fields in your textproto.
   // Add or remove names here to match your target execution suite.
-  @Param("primitive_numeric_and_string", "collection_contains_distinct", "nested_message_hierarchy")
+  @Param(
+    "vm_bool",
+    "vm_int32",
+    "vm_int64",
+    "vm_float",
+    "vm_double",
+    "vm_string",
+    "vm_enum",
+    "vis_int32",
+    "vis_int64",
+    "vis_float",
+    "vis_double",
+    "vis_string",
+    "vis_enum",
+    "sm_value",
+    "sm_starts_with",
+    "sm_ends_with",
+    "sm_contains",
+    "sm_pattern",
+    "message_matcher_structural",
+    "not_matcher_inversion",
+    "cm_any",
+    "cm_all",
+    "cm_none",
+    "cm_empty",
+    "cm_size",
+    "cm_contains_elements",
+    "combine_any",
+    "combine_all",
+    "combine_none",
+  )
   lateinit var benchmarkName: String
 
   private lateinit var sampleProto: Matcher
