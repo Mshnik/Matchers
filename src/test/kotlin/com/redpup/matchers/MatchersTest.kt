@@ -1,74 +1,190 @@
 package com.redpup.matchers
 
 import com.google.common.truth.Truth.assertThat
-import com.redpup.matchers.MatcherFactory.messageMatcher
-import com.redpup.matchers.proto.Matcher
+import com.google.protobuf.Empty
+import com.redpup.matchers.proto.*
+import com.redpup.matchers.proto.CollectionMatcherKt.distinctElementsMatcher
+import com.redpup.matchers.proto.CombiningMatcher.Combine
 import com.redpup.matchers.proto.MessageMatcherKt.fieldMatcher
-import com.redpup.matchers.proto.matcher
-import com.redpup.matchers.proto.messageMatcher
-import com.redpup.matchers.proto.valueMatcher
+import com.redpup.matchers.proto.StringMatcher.CaseSensitivity
+import com.redpup.matchers.proto.ValueInSetMatcherKt.int32ValueSet
+import com.redpup.matchers.proto.ValueInSetMatcherKt.stringValueSet
 import com.redpup.matchers.testing.proto.TestMessage
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import org.junit.Test
 
 class MatcherDslTest {
-  companion object {
-    private val descriptor = TestMessage.getDescriptor()
+
+  @Test
+  fun testStandaloneTopLevelStringMatchers() {
+    // 1. Built using the custom Type-Safe Domain DSL
+    val dslBuilt = typedMatcher<String> {
+      textEquals("hello_world", CaseSensitivity.CASE_SENSITIVE)
+    }
+
+    // 2. Built using standard vanilla Kotlin Proto DSL
+    val nativeProtoBuilt = matcher {
+      stringMatcher = stringMatcher {
+        caseSensitive = CaseSensitivity.CASE_SENSITIVE
+        value = "hello_world"
+      }
+    }
+
+    assertThat(dslBuilt).isEqualTo(nativeProtoBuilt)
   }
 
   @Test
-  fun `singleField creates identical structure to raw proto builder`() {
-    val expected = matcher {
+  fun testCombinerLogicGates() {
+    val dslBuilt = typedMatcher<Int> {
+      anyOf {
+        matches { matchesValue(10) }
+        matches { inSet(listOf(20, 30)) }
+      }
+    }
+
+    val nativeProtoBuilt = matcher {
+      combiningMatcher = combiningMatcher {
+        combine = Combine.COMBINE_ANY
+        matchers += matcher { valueMatcher = valueMatcher { int32Value = 10 } }
+        matchers += matcher {
+          valueInSetMatcher = valueInSetMatcher {
+            int32Values = int32ValueSet { values += listOf(20, 30) }
+          }
+        }
+      }
+    }
+
+    assertThat(dslBuilt).isEqualTo(nativeProtoBuilt)
+  }
+
+  @Test
+  fun testComplexMessageTreeStructure() {
+    // Verified using your updated untypedMessageMatcher mapping engine entrypoint
+    val dslBuilt = matcher {
+      untypedMessageMatcher(TestMessage.getDescriptor()) {
+        "string_value" matchesValue "active"
+        "int32_value" matches {
+          not { matchesValue(0) }
+        }
+        "string_values" matchesCollection {
+          containsDistinct {
+            matches { startsWith("prefix_") }
+            matches { inSet(setOf("match_a", "match_b")) }
+          }
+        }
+      }
+    }
+
+    val nativeProtoBuilt = matcher {
       messageMatcher = messageMatcher {
         messageName = "com.redpup.matchers.testing.TestMessage"
+
+        fields += fieldMatcher {
+          fieldNumber = 6
+          fieldName = "string_value"
+          matcher = matcher { valueMatcher = valueMatcher { stringValue = "active" } }
+        }
+
         fields += fieldMatcher {
           fieldNumber = 2
           fieldName = "int32_value"
           matcher = matcher {
-            valueMatcher = valueMatcher {
-              int32Value = 42
+            notMatcher = matcher { valueMatcher = valueMatcher { int32Value = 0 } }
+          }
+        }
+
+        fields += fieldMatcher {
+          fieldNumber = 24
+          fieldName = "string_values"
+          matcher = matcher {
+            collectionMatcher = collectionMatcher {
+              containsElements = distinctElementsMatcher {
+                matchers += matcher { stringMatcher = stringMatcher { startsWith = "prefix_" } }
+                matchers += matcher {
+                  valueInSetMatcher = valueInSetMatcher {
+                    stringValues = stringValueSet { values += listOf("match_a", "match_b") }
+                  }
+                }
+              }
             }
           }
         }
       }
     }
 
-    // 2. Build using your new Kotlin Custom DSL
-    val actual = Matcher.newBuilder().messageMatcher(descriptor) {
-      "int32_value".matches {
-        valueMatcherBuilder.setInt32Value(42)
-      }
-    }.build()
-
-    // 3. Structural assertion via Google Truth
-    assertThat(actual).isEqualTo(expected)
+    assertThat(dslBuilt).isEqualTo(nativeProtoBuilt)
   }
 
   @Test
-  fun `dsl factory object method builds freestanding message matchers cleanly`() {
-    val expectedFreestanding = messageMatcher {
-      messageName = "com.redpup.matchers.testing.TestMessage"
-      fields += fieldMatcher {
-        fieldNumber = 1
-        fieldName = "bool_value"
-        matcher = matcher { constantMatcher = false }
+  fun testNestedMessageMatchers() {
+    val dslBuilt = matcher {
+      untypedMessageMatcher(TestMessage.getDescriptor()) {
+        "message_value" matchesMessage {
+          "bool_value" matchesValue true
+        }
       }
     }
 
-    val actualFreestanding = messageMatcher(descriptor) {
-      1.matches { constantMatcher = false }
+    val nativeProtoBuilt = matcher {
+      messageMatcher = messageMatcher {
+        messageName = "com.redpup.matchers.testing.TestMessage"
+
+        fields += fieldMatcher {
+          fieldNumber = 8
+          fieldName = "message_value"
+          matcher = matcher {
+            messageMatcher = messageMatcher {
+              messageName = "com.redpup.matchers.testing.TestMessage"
+              fields += fieldMatcher {
+                fieldNumber = 1
+                fieldName = "bool_value"
+                matcher = matcher { valueMatcher = valueMatcher { boolValue = true } }
+              }
+            }
+          }
+        }
+      }
     }
 
-    assertThat(actualFreestanding).isEqualTo(expectedFreestanding)
+    assertThat(dslBuilt).isEqualTo(nativeProtoBuilt)
   }
 
   @Test
-  fun `dsl validation triggers exception when unknown named properties are targeted`() {
-    val exception = assertThrows<IllegalArgumentException> {
-      messageMatcher(descriptor) {
-        "non_existent_field".matches { constantMatcher = true }
+  fun testTypedMessageMatcherEntryPoint() {
+    // Verifies the TypedMatcherBuilder context receiver wrapper variant
+    val dslBuilt = typedMatcher<TestMessage> {
+      typedMessageMatcher(TestMessage.getDescriptor()) {
+        "int32_value" matchesValue 42
       }
     }
-    assertThat(exception).hasMessageThat().contains("Field 'non_existent_field' not found")
+
+    val nativeProtoBuilt = matcher {
+      messageMatcher = messageMatcher {
+        messageName = "com.redpup.matchers.testing.TestMessage"
+        fields += fieldMatcher {
+          fieldNumber = 2
+          fieldName = "int32_value"
+          matcher = matcher { valueMatcher = valueMatcher { int32Value = 42 } }
+        }
+      }
+    }
+
+    assertThat(dslBuilt).isEqualTo(nativeProtoBuilt)
+  }
+
+  @Test
+  fun testCollectionIsEmptyValidation() {
+    val dslBuilt = typedMatcher<Collection<Int>> {
+      collectionMatcher {
+        isEmpty()
+      }
+    }
+
+    val nativeProtoBuilt = matcher {
+      collectionMatcher = collectionMatcher {
+        empty = Empty.getDefaultInstance()
+      }
+    }
+
+    assertThat(dslBuilt).isEqualTo(nativeProtoBuilt)
   }
 }

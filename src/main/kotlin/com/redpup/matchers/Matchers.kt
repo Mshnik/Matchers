@@ -2,97 +2,337 @@ package com.redpup.matchers
 
 import com.google.protobuf.Descriptors.Descriptor
 import com.google.protobuf.Descriptors.FieldDescriptor
-import com.redpup.matchers.proto.Matcher
-import com.redpup.matchers.proto.MessageMatcher
+import com.google.protobuf.Empty
+import com.redpup.matchers.proto.*
+import com.redpup.matchers.proto.CollectionMatcherKt.distinctElementsMatcher
+import com.redpup.matchers.proto.CombiningMatcher.Combine
 import com.redpup.matchers.proto.MessageMatcher.FieldMatcher
+import com.redpup.matchers.proto.StringMatcher.CaseSensitivity
+import com.redpup.matchers.proto.ValueInSetMatcherKt.doubleValueSet
+import com.redpup.matchers.proto.ValueInSetMatcherKt.floatValueSet
+import com.redpup.matchers.proto.ValueInSetMatcherKt.int32ValueSet
+import com.redpup.matchers.proto.ValueInSetMatcherKt.int64ValueSet
+import com.redpup.matchers.proto.ValueInSetMatcherKt.stringValueSet
 
 @DslMarker
-annotation class MatcherDsl
+annotation class TypedMatcherDsl
+
+// ============================================================================
+// 1. Core Type-Safety Guard & Entry Points
+// ============================================================================
 
 /**
- * Integrates the descriptor-driven [MessageMatcher] directly into any standard [Matcher.Builder].
+ * A compile-time phantom type wrapper to enforce strict type-safety boundaries on [Matcher.Builder].
+ * It stops developers from mixing incompatible rules (e.g., placing string matchers inside integer blocks).
  */
-inline fun Matcher.Builder.messageMatcher(
+@TypedMatcherDsl
+class TypedMatcherBuilder<T>(val delegate: Matcher.Builder)
+
+/** Instantiates a raw, top-level standalone matcher explicitly locked to a type [T]. */
+inline fun <reified T> typedMatcher(crossinline block: TypedMatcherBuilder<T>.() -> Unit): Matcher {
+  val builder = Matcher.newBuilder()
+  TypedMatcherBuilder<T>(builder).block()
+  return builder.build()
+}
+
+/** Integrates descriptor-driven [MessageMatcher] directly into any typed or untyped [Matcher.Builder]. */
+inline fun Matcher.Builder.untypedMessageMatcher(
   descriptor: Descriptor,
   crossinline block: MessageMatcherBuilder.() -> Unit,
-): Matcher.Builder {
-  return setMessageMatcher(MatcherFactory.messageMatcher(descriptor, block))
+): Matcher.Builder = setMessageMatcher(MessageMatcherBuilder.build(descriptor, block))
+
+inline fun <T> TypedMatcherBuilder<T>.typedMessageMatcher(
+  descriptor: Descriptor,
+  crossinline block: MessageMatcherBuilder.() -> Unit,
+): TypedMatcherBuilder<T> {
+  delegate.untypedMessageMatcher(descriptor, block)
+  return this
 }
 
-/** Methods for building [Matcher] protos. */
-@MatcherDsl
-object MatcherFactory {
+// ============================================================================
+// 2. Type-Locked Primitive Extensions
+// ============================================================================
 
-  /** Constructs a [MessageMatcher] proto message given a root [Descriptor]. */
-  inline fun messageMatcher(
-    descriptor: Descriptor,
-    block: MessageMatcherBuilder.() -> Unit,
-  ): MessageMatcher {
-    val builder = MessageMatcherBuilder(descriptor)
-    builder.block()
-    return builder.build()
+// --- Int Type Allocations ---
+@JvmName("valueInt")
+fun TypedMatcherBuilder<Int>.matchesValue(target: Int): Matcher.Builder =
+  delegate.setValueMatcher(valueMatcher { int32Value = target })
+
+@JvmName("inSetInt")
+fun TypedMatcherBuilder<Int>.inSet(elements: Iterable<Int>): Matcher.Builder =
+  delegate.setValueInSetMatcher(valueInSetMatcher {
+    int32Values = int32ValueSet { values += elements }
+  })
+
+// --- Long Type Allocations ---
+@JvmName("valueLong")
+fun TypedMatcherBuilder<Long>.matchesValue(target: Long): Matcher.Builder =
+  delegate.setValueMatcher(valueMatcher { int64Value = target })
+
+@JvmName("inSetLong")
+fun TypedMatcherBuilder<Long>.inSet(elements: Iterable<Long>): Matcher.Builder =
+  delegate.setValueInSetMatcher(valueInSetMatcher {
+    int64Values = int64ValueSet { values += elements }
+  })
+
+// --- Float Type Allocations ---
+@JvmName("valueFloat")
+fun TypedMatcherBuilder<Float>.matchesValue(target: Float): Matcher.Builder =
+  delegate.setValueMatcher(valueMatcher { floatValue = target })
+
+@JvmName("inSetFloat")
+fun TypedMatcherBuilder<Float>.inSet(elements: Iterable<Float>): Matcher.Builder =
+  delegate.setValueInSetMatcher(valueInSetMatcher {
+    floatValues = floatValueSet { values += elements }
+  })
+
+// --- Double Type Allocations ---
+@JvmName("valueDouble")
+fun TypedMatcherBuilder<Double>.matchesValue(target: Double): Matcher.Builder =
+  delegate.setValueMatcher(valueMatcher { doubleValue = target })
+
+@JvmName("inSetDouble")
+fun TypedMatcherBuilder<Double>.inSet(elements: Iterable<Double>): Matcher.Builder =
+  delegate.setValueInSetMatcher(valueInSetMatcher {
+    doubleValues = doubleValueSet { values += elements }
+  })
+
+// --- Boolean Type Allocations ---
+@JvmName("valueBoolean")
+fun TypedMatcherBuilder<Boolean>.matchesValue(target: Boolean): Matcher.Builder =
+  delegate.setValueMatcher(valueMatcher { boolValue = target })
+
+// --- String Type Allocations ---
+@JvmName("valueString")
+fun TypedMatcherBuilder<String>.matchesValue(target: String): Matcher.Builder =
+  delegate.setValueMatcher(valueMatcher { stringValue = target })
+
+@JvmName("inSetString")
+fun TypedMatcherBuilder<String>.inSet(elements: Iterable<String>): Matcher.Builder =
+  delegate.setValueInSetMatcher(valueInSetMatcher {
+    stringValues = stringValueSet { values += elements }
+  })
+
+fun TypedMatcherBuilder<String>.textEquals(
+  text: String,
+  case: CaseSensitivity = CaseSensitivity.CASE_SENSITIVE,
+): Matcher.Builder = delegate.setStringMatcher(stringMatcher {
+  caseSensitive = case
+  value = text
+})
+
+fun TypedMatcherBuilder<String>.startsWith(
+  prefix: String,
+  case: CaseSensitivity = CaseSensitivity.CASE_SENSITIVE,
+): Matcher.Builder =
+  delegate.setStringMatcher(stringMatcher {
+    caseSensitive = case
+    startsWith = prefix
+  })
+
+fun TypedMatcherBuilder<String>.endsWith(
+  suffix: String,
+  case: CaseSensitivity = CaseSensitivity.CASE_SENSITIVE,
+): Matcher.Builder =
+  delegate.setStringMatcher(stringMatcher {
+    caseSensitive = case
+    endsWith = suffix
+  })
+
+fun TypedMatcherBuilder<String>.contains(
+  substring: String,
+  case: CaseSensitivity = CaseSensitivity.CASE_SENSITIVE,
+): Matcher.Builder =
+  delegate.setStringMatcher(stringMatcher {
+    caseSensitive = case
+    contains = substring
+  })
+
+fun TypedMatcherBuilder<String>.matchesRegex(patternString: String): Matcher.Builder =
+  delegate.setStringMatcher(stringMatcher { pattern = patternString })
+
+// --- Generic Constant Fallback ---
+fun <T> TypedMatcherBuilder<T>.always(value: Boolean): Matcher.Builder =
+  delegate.setConstantMatcher(value)
+
+// ============================================================================
+// 3. Type-Safe Logical Combiners & Collections
+// ============================================================================
+
+inline fun <T> TypedMatcherBuilder<T>.not(crossinline block: TypedMatcherBuilder<T>.() -> Unit): Matcher.Builder =
+  delegate.setNotMatcher(
+    Matcher.newBuilder().apply { TypedMatcherBuilder<T>(this).block() }.build()
+  )
+
+inline fun <T> TypedMatcherBuilder<T>.anyOf(crossinline block: TypedCombiningMatcherBuilder<T>.() -> Unit): Matcher.Builder =
+  delegate.setCombiningMatcher(combiningMatcher {
+    combine = Combine.COMBINE_ANY
+    matchers += TypedCombiningMatcherBuilder<T>().apply(block).build()
+  })
+
+inline fun <T> TypedMatcherBuilder<T>.allOf(crossinline block: TypedCombiningMatcherBuilder<T>.() -> Unit): Matcher.Builder =
+  delegate.setCombiningMatcher(combiningMatcher {
+    combine = Combine.COMBINE_ALL
+    matchers += TypedCombiningMatcherBuilder<T>().apply(block).build()
+  })
+
+inline fun <T> TypedMatcherBuilder<T>.noneOf(crossinline block: TypedCombiningMatcherBuilder<T>.() -> Unit): Matcher.Builder =
+  delegate.setCombiningMatcher(combiningMatcher {
+    combine = Combine.COMBINE_NONE
+    matchers += TypedCombiningMatcherBuilder<T>().apply(block).build()
+  })
+
+inline fun <E> TypedMatcherBuilder<out Collection<E>>.collectionMatcher(
+  crossinline block: TypedCollectionMatcherBuilder<E>.() -> Unit,
+): TypedMatcherBuilder<out Collection<E>> {
+  val protoCollectionBuilder = CollectionMatcher.newBuilder()
+  TypedCollectionMatcherBuilder<E>(protoCollectionBuilder).block()
+  delegate.setCollectionMatcher(protoCollectionBuilder.build())
+  return this
+}
+
+// ============================================================================
+// 4. Scoped Message Matcher Builder (Descriptor Routing Engine)
+// ============================================================================
+
+/** Scopes field validations directly against an explicit reflective Protobuf structural [Descriptor]. */
+@TypedMatcherDsl
+class MessageMatcherBuilder @PublishedApi internal constructor(
+  @PublishedApi internal val descriptor: Descriptor,
+) {
+  @PublishedApi internal val builder: MessageMatcher.Builder =
+    MessageMatcher.newBuilder().setMessageName(descriptor.fullName)
+
+  companion object {
+    inline fun build(
+      descriptor: Descriptor,
+      block: MessageMatcherBuilder.() -> Unit,
+    ): MessageMatcher {
+      return MessageMatcherBuilder(descriptor).apply(block).builder.build()
+    }
   }
-}
 
-/** A companion builder wrapper that scopes operations around a specific [Descriptor]. */
-@MatcherDsl
-class MessageMatcherBuilder(private val descriptor: Descriptor) {
-  private val builder = MessageMatcher.newBuilder().setMessageName(descriptor.fullName)
-
-  /** Adds a [FieldMatcher] to this builder for this field. */
-  fun FieldDescriptor.matches(block: Matcher.Builder.() -> Unit) =
+  // --- Dynamic Raw Block Configuration Hooks ---
+  infix fun <F> FieldDescriptor.matches(block: TypedMatcherBuilder<F>.() -> Unit) =
     addFieldRule(this, block)
 
-  /** Adds a [FieldMatcher] to this builder for this field. */
-  fun String.matches(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, block)
+  infix fun <F> String.matches(block: TypedMatcherBuilder<F>.() -> Unit) = addFieldRule(this, block)
+  infix fun <F> Int.matches(block: TypedMatcherBuilder<F>.() -> Unit) = addFieldRule(this, block)
 
-  /** Adds a [FieldMatcher] to this builder for this field. */
-  fun Int.matches(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, block)
+  // --- Type-Inferred Field Shorthands ---
+  infix fun FieldDescriptor.matchesValue(value: Int) = matches { matchesValue(value) }
+  infix fun FieldDescriptor.matchesValue(value: String) = matches { matchesValue(value) }
+  infix fun FieldDescriptor.matchesValue(value: Boolean) = matches { matchesValue(value) }
 
-  /** Adds a [FieldMatcher] to this builder on the given [fieldDescriptor]. */
-  private fun addFieldRule(
+  infix fun String.matchesValue(value: Int) = matches { matchesValue(value) }
+  infix fun String.matchesValue(value: String) = matches { matchesValue(value) }
+  infix fun String.matchesValue(value: Boolean) = matches { matchesValue(value) }
+
+  // --- Hierarchical Messaging Nested Layout Pass-throughs ---
+  inline fun FieldDescriptor.matchesMessage(crossinline block: MessageMatcherBuilder.() -> Unit) {
+    matches<Any> {
+      delegate.untypedMessageMatcher(this@matchesMessage.messageType, block)
+    }
+  }
+
+  inline infix fun String.matchesMessage(crossinline block: MessageMatcherBuilder.() -> Unit) {
+    val descriptorForField = this@matchesMessage.toDescriptor()
+    matches<Any> {
+      delegate.untypedMessageMatcher(descriptorForField.messageType, block)
+    }
+  }
+
+  // --- Type-Locked Collection Forwarding Blocks ---
+  inline fun <E> FieldDescriptor.matchesCollection(crossinline block: TypedCollectionMatcherBuilder<E>.() -> Unit) {
+    matches<Collection<E>> {
+      val protoCollectionBuilder = CollectionMatcher.newBuilder()
+      TypedCollectionMatcherBuilder<E>(protoCollectionBuilder).block()
+      delegate.setCollectionMatcher(protoCollectionBuilder.build())
+    }
+  }
+
+  inline infix fun <E> String.matchesCollection(crossinline block: TypedCollectionMatcherBuilder<E>.() -> Unit) {
+    val descriptorForField = this.toDescriptor()
+    descriptorForField.matchesCollection(block)
+  }
+
+  // --- Internal Wiring Infrastructures ---
+  @PublishedApi
+  internal fun <F> addFieldRule(
     fieldDescriptor: FieldDescriptor,
-    matcherBlock: Matcher.Builder.() -> Unit,
+    matcherBlock: TypedMatcherBuilder<F>.() -> Unit,
   ) {
-    check(fieldDescriptor.containingType == descriptor) {
-      "Field '${fieldDescriptor.fullName}' does not belong to message structure '${descriptor.fullName}'"
-    }
-
-    val innerMatcher = Matcher.newBuilder().apply(matcherBlock).build()
-
-    val fieldMatcher = FieldMatcher.newBuilder()
-      .setFieldNumber(fieldDescriptor.number)
-      .setFieldName(fieldDescriptor.name)
-      .setMatcher(innerMatcher)
-      .build()
-
-    builder.addFields(fieldMatcher)
+    check(fieldDescriptor.containingType == descriptor) { "Field '${fieldDescriptor.fullName}' belongs to a different schema descriptor context than '${descriptor.fullName}'" }
+    val childMatcher =
+      Matcher.newBuilder().apply { TypedMatcherBuilder<F>(this).matcherBlock() }.build()
+    builder.addFields(
+      FieldMatcher.newBuilder().setFieldNumber(fieldDescriptor.number)
+        .setFieldName(fieldDescriptor.name).setMatcher(childMatcher)
+    )
   }
 
-  /** Adds a [FieldMatcher] to this builder on the given [fieldName] with the given [matchType]. */
-  private fun addFieldRule(
+  @PublishedApi
+  internal fun <F> addFieldRule(
     fieldName: String,
-    matcherBlock: Matcher.Builder.() -> Unit,
+    matcherBlock: TypedMatcherBuilder<F>.() -> Unit,
   ) {
-    val fieldDescriptor = requireNotNull(descriptor.findFieldByName(fieldName)) {
-      "Field '$fieldName' not found inside descriptor '${descriptor.fullName}'"
-    }
+    val descriptorForField = fieldName.toDescriptor()
+    addFieldRule(descriptorForField, matcherBlock)
+  }
+
+  @PublishedApi
+  internal fun <F> addFieldRule(fieldNumber: Int, matcherBlock: TypedMatcherBuilder<F>.() -> Unit) {
+    val fieldDescriptor =
+      requireNotNull(descriptor.findFieldByNumber(fieldNumber)) { "Field code #$fieldNumber is invalid inside ${descriptor.fullName}" }
     addFieldRule(fieldDescriptor, matcherBlock)
   }
 
-  /** Adds a [FieldMatcher] to this builder on the given [fieldNumber] with the given [matchType]. */
-  private fun addFieldRule(
-    fieldNumber: Int,
-    matcherBlock: Matcher.Builder.() -> Unit,
-  ) {
-    val fieldDescriptor = requireNotNull(descriptor.findFieldByNumber(fieldNumber)) {
-      "Field with number $fieldNumber not found inside descriptor '${descriptor.fullName}'"
-    }
-    addFieldRule(fieldDescriptor, matcherBlock)
+  @PublishedApi
+  internal fun String.toDescriptor(): FieldDescriptor =
+    requireNotNull(descriptor.findFieldByName(this)) { "Field identifier string name '$this' is absent inside ${descriptor.fullName}" }
+}
+
+// ============================================================================
+// 5. Context Implementation Classes
+// ============================================================================
+
+@TypedMatcherDsl
+class TypedCombiningMatcherBuilder<T> {
+  @PublishedApi internal val nestedList = mutableListOf<Matcher>()
+
+  inline fun matches(crossinline block: TypedMatcherBuilder<T>.() -> Unit) {
+    nestedList += Matcher.newBuilder().apply { TypedMatcherBuilder<T>(this).block() }.build()
   }
 
-  /** Builds this into a [MessageMatcher]. */
-  fun build(): MessageMatcher = builder.build()
+  fun build(): List<Matcher> = nestedList
+}
+
+@TypedMatcherDsl
+class TypedCollectionMatcherBuilder<E> @PublishedApi internal constructor(
+  @PublishedApi internal val target: CollectionMatcher.Builder,
+) {
+  inline fun any(crossinline block: TypedMatcherBuilder<E>.() -> Unit) {
+    target.any = Matcher.newBuilder().apply { TypedMatcherBuilder<E>(this).block() }.build()
+  }
+
+  inline fun all(crossinline block: TypedMatcherBuilder<E>.() -> Unit) {
+    target.all = Matcher.newBuilder().apply { TypedMatcherBuilder<E>(this).block() }.build()
+  }
+
+  inline fun none(crossinline block: TypedMatcherBuilder<E>.() -> Unit) {
+    target.none = Matcher.newBuilder().apply { TypedMatcherBuilder<E>(this).block() }.build()
+  }
+
+  fun isEmpty() {
+    target.empty = Empty.getDefaultInstance()
+  }
+
+  inline fun sizeMatches(crossinline block: TypedMatcherBuilder<Int>.() -> Unit) {
+    target.size = Matcher.newBuilder().apply { TypedMatcherBuilder<Int>(this).block() }.build()
+  }
+
+  inline fun containsDistinct(crossinline block: TypedCombiningMatcherBuilder<E>.() -> Unit) {
+    target.containsElements =
+      distinctElementsMatcher { matchers += TypedCombiningMatcherBuilder<E>().apply(block).build() }
+  }
 }

@@ -4,7 +4,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
 /** Utilities for working with [KType]s. */
-object KTypes {
+internal object KTypes {
   /** Returns true iff this is a subclass of [interfaceTarget]. */
   infix fun KType.isSubclassOf(interfaceTarget: KClass<*>): Boolean {
     // Extract the raw KClass classifier from the KType (e.g., MyMessage from MyMessage)
