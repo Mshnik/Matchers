@@ -37,7 +37,7 @@ class KMatcherTest {
     val exception = assertThrows<IllegalStateException> {
       matcher.match(42) // Int passed instead of String
     }
-    assertTrue(exception.message!!.contains("Expected instance of String"))
+    assertTrue(exception.message!!.contains("Expected instance of"))
   }
 
   @Test

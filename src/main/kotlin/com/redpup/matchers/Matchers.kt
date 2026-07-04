@@ -5,7 +5,6 @@ import com.google.protobuf.Descriptors.FieldDescriptor
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.MessageMatcher
 import com.redpup.matchers.proto.MessageMatcher.FieldMatcher
-import com.redpup.matchers.proto.MessageMatcher.FieldMatcher.FieldMatchType
 
 @DslMarker
 annotation class MatcherDsl
@@ -40,59 +39,21 @@ object MatcherFactory {
 class MessageMatcherBuilder(private val descriptor: Descriptor) {
   private val builder = MessageMatcher.newBuilder().setMessageName(descriptor.fullName)
 
-  /** Adds a [FieldMatcher] to this builder on a single field for this field. */
+  /** Adds a [FieldMatcher] to this builder for this field. */
   fun FieldDescriptor.matches(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.SINGLE_FIELD, block)
+    addFieldRule(this, block)
 
-  /** Adds a [FieldMatcher] to this builder on a single field for this field. */
+  /** Adds a [FieldMatcher] to this builder for this field. */
   fun String.matches(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.SINGLE_FIELD, block)
+    addFieldRule(this, block)
 
-  /** Adds a [FieldMatcher] to this builder on a single field for this field. */
+  /** Adds a [FieldMatcher] to this builder for this field. */
   fun Int.matches(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.SINGLE_FIELD, block)
+    addFieldRule(this, block)
 
-  /** Adds a [FieldMatcher] to this builder on a repeated any field for this field. */
-  fun FieldDescriptor.any(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ANY, block)
-
-  /** Adds a [FieldMatcher] to this builder on a repeated any field for this field. */
-  fun String.any(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ANY, block)
-
-  /** Adds a [FieldMatcher] to this builder on a repeated any field for this field. */
-  fun Int.any(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ANY, block)
-
-  /** Adds a [FieldMatcher] to this builder on a repeated all field for this field. */
-  fun FieldDescriptor.all(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ALL, block)
-
-  /** Adds a [FieldMatcher] to this builder on a repeated all field for this field. */
-  fun String.all(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ALL, block)
-
-  /** Adds a [FieldMatcher] to this builder on a repeated all field for this field. */
-  fun Int.all(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.REPEATED_FIELD_ALL, block)
-
-  /** Adds a [FieldMatcher] to this builder on a repeated none field for this field. */
-  fun FieldDescriptor.none(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.REPEATED_FIELD_NONE, block)
-
-  /** Adds a [FieldMatcher] to this builder on a repeated none field for this field. */
-  fun String.repeatedFieldNone(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.REPEATED_FIELD_NONE, block)
-
-  /** Adds a [FieldMatcher] to this builder on a repeated none field for this field. */
-  fun Int.repeatedFieldNone(block: Matcher.Builder.() -> Unit) =
-    addFieldRule(this, FieldMatchType.REPEATED_FIELD_NONE, block)
-
-
-  /** Adds a [FieldMatcher] to this builder on the given [fieldDescriptor] with the given [matchType]. */
+  /** Adds a [FieldMatcher] to this builder on the given [fieldDescriptor]. */
   private fun addFieldRule(
     fieldDescriptor: FieldDescriptor,
-    matchType: FieldMatchType,
     matcherBlock: Matcher.Builder.() -> Unit,
   ) {
     check(fieldDescriptor.containingType == descriptor) {
@@ -104,7 +65,6 @@ class MessageMatcherBuilder(private val descriptor: Descriptor) {
     val fieldMatcher = FieldMatcher.newBuilder()
       .setFieldNumber(fieldDescriptor.number)
       .setFieldName(fieldDescriptor.name)
-      .setMatchType(matchType)
       .setMatcher(innerMatcher)
       .build()
 
@@ -114,25 +74,23 @@ class MessageMatcherBuilder(private val descriptor: Descriptor) {
   /** Adds a [FieldMatcher] to this builder on the given [fieldName] with the given [matchType]. */
   private fun addFieldRule(
     fieldName: String,
-    matchType: FieldMatchType,
     matcherBlock: Matcher.Builder.() -> Unit,
   ) {
     val fieldDescriptor = requireNotNull(descriptor.findFieldByName(fieldName)) {
       "Field '$fieldName' not found inside descriptor '${descriptor.fullName}'"
     }
-    addFieldRule(fieldDescriptor, matchType, matcherBlock)
+    addFieldRule(fieldDescriptor, matcherBlock)
   }
 
   /** Adds a [FieldMatcher] to this builder on the given [fieldNumber] with the given [matchType]. */
   private fun addFieldRule(
     fieldNumber: Int,
-    matchType: FieldMatchType,
     matcherBlock: Matcher.Builder.() -> Unit,
   ) {
     val fieldDescriptor = requireNotNull(descriptor.findFieldByNumber(fieldNumber)) {
       "Field with number $fieldNumber not found inside descriptor '${descriptor.fullName}'"
     }
-    addFieldRule(fieldDescriptor, matchType, matcherBlock)
+    addFieldRule(fieldDescriptor, matcherBlock)
   }
 
   /** Builds this into a [MessageMatcher]. */

@@ -9,8 +9,10 @@ import com.google.protobuf.Message
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.MessageMatcher.FieldMatcher
-import com.redpup.matchers.proto.MessageMatcher.FieldMatcher.FieldMatchType.*
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.KTypeProjection
+import kotlin.reflect.full.createType
 
 /** The compiled implementation of [com.redpup.matchers.proto.MessageMatcher]. */
 class KMessageMatcher<in T : Message>(
@@ -30,15 +32,19 @@ class KMessageMatcher<in T : Message>(
     expectedClass: KClass<T>,
     fieldDescriptor: FieldDescriptor,
   ): KFieldMatcher<*, T> {
-    val matcher = compile(matcher, fieldDescriptor.kClass)
-    return when (matchType) {
-      SINGLE_FIELD -> KSingleFieldMatcher(expectedClass, matcher, fieldDescriptor)
-      REPEATED_FIELD_ANY -> KRepeatedAnyFieldMatcher(expectedClass, matcher, fieldDescriptor)
-      REPEATED_FIELD_ALL -> KRepeatedAllFieldMatcher(expectedClass, matcher, fieldDescriptor)
-      REPEATED_FIELD_NONE -> KRepeatedNoneFieldMatcher(expectedClass, matcher, fieldDescriptor)
-      FIELD_MATCH_TYPE_UNSET, UNRECOGNIZED -> throw IllegalArgumentException("FieldMatcher has no matchType set: $proto")
-      null -> throw NullPointerException()
-    }
+    val types = fieldDescriptor.kClassAndType
+    return toKFieldMatcher(expectedClass, fieldDescriptor, types.first, types.second)
+  }
+
+  /** Builds a [KFieldMatcher] for the given [FieldMatcher]. */
+  private fun <F : Any> FieldMatcher.toKFieldMatcher(
+    expectedClass: KClass<T>,
+    fieldDescriptor: FieldDescriptor,
+    fieldClass: KClass<F>,
+    fieldType: KType,
+  ): KFieldMatcher<F, T> {
+    val matcher = compile(matcher, fieldClass, fieldType)
+    return KFieldMatcher(expectedClass, matcher, fieldDescriptor)
   }
 
   override fun matchTyped(value: T): Boolean = fields.all { it.match(value) }
@@ -99,87 +105,34 @@ class KMessageMatcher<in T : Message>(
 
         null -> throw NullPointerException("Field type is null for field: $fullName")
       }
+
+    /**
+     * Gets the appropriate [KClass] and [KType] representation for this field, accounting for
+     * repeated elements.
+     */
+    val FieldDescriptor.kClassAndType: Pair<KClass<*>, KType>
+      get() {
+        val kClass = kClass
+        val elementKType = kClass.createType(nullable = false)
+
+        return if (isRepeated) {
+          kClass to List::class.createType(
+            listOf(KTypeProjection.invariant(elementKType)),
+            nullable = false
+          )
+        } else {
+          kClass to elementKType
+        }
+      }
   }
 }
 
-/** A matcher on a specific field in a [KMessageMatcher]. */
-private sealed class KFieldMatcher<in T : Any, in M : Message>(
+/** A field matcher on a specific field in a [KMessageMatcher]. */
+private class KFieldMatcher<in T : Any, in M : Message>(
   messageClass: KClass<M>,
-  val matcher: KMatcher<T>,
-  val fieldDescriptor: FieldDescriptor,
-) : KMatcher<M>(messageClass)
-
-/** A single field matcher on a specific field in a [KMessageMatcher]. */
-private class KSingleFieldMatcher<in T : Any, in M : Message>(
-  messageClass: KClass<M>,
-  matcher: KMatcher<T>,
-  fieldDescriptor: FieldDescriptor,
-) : KFieldMatcher<T, M>(messageClass, matcher, fieldDescriptor) {
-
-  init {
-    check(!fieldDescriptor.isRepeated) {
-      "Expected non-repeated field, found $fieldDescriptor"
-    }
-  }
+  private val matcher: KMatcher<T>,
+  private val fieldDescriptor: FieldDescriptor,
+) : KMatcher<M>(messageClass) {
 
   override fun matchTyped(value: M): Boolean = matcher.match(value.getField(fieldDescriptor))
-}
-
-/** A repeated field matcher on a specific field in a [KMessageMatcher]. */
-private abstract class KRepeatedFieldMatcher<in T : Any, in M : Message>(
-  messageClass: KClass<M>,
-  matcher: KMatcher<T>,
-  fieldDescriptor: FieldDescriptor,
-) : KFieldMatcher<T, M>(messageClass, matcher, fieldDescriptor) {
-
-  init {
-    check(fieldDescriptor.isRepeated) {
-      "Expected repeated field, found $fieldDescriptor"
-    }
-  }
-
-  override fun matchTyped(value: M): Boolean {
-    @Suppress("UNCHECKED_CAST") // Repeated proto fields always are iterable.
-    val values = value.getField(fieldDescriptor) as Iterable<Any>
-    return matchField(values)
-  }
-
-  /** Returns if [matcher] matches the given [field] content. */
-  abstract fun matchField(field: Iterable<Any>): Boolean
-}
-
-/**
- * A repeated field matcher on a specific field in a [KMessageMatcher] that matches if any
- * value matches.
- */
-private class KRepeatedAnyFieldMatcher<in T : Any, in M : Message>(
-  messageClass: KClass<M>,
-  matcher: KMatcher<T>,
-  fieldDescriptor: FieldDescriptor,
-) : KRepeatedFieldMatcher<T, M>(messageClass, matcher, fieldDescriptor) {
-  override fun matchField(field: Iterable<Any>): Boolean = field.any { matcher.match(it) }
-}
-
-/**
- * A repeated field matcher on a specific field in a [KMessageMatcher] that matches if all
- * values match.
- */
-private class KRepeatedAllFieldMatcher<in T : Any, in M : Message>(
-  messageClass: KClass<M>,
-  matcher: KMatcher<T>,
-  fieldDescriptor: FieldDescriptor,
-) : KRepeatedFieldMatcher<T, M>(messageClass, matcher, fieldDescriptor) {
-  override fun matchField(field: Iterable<Any>): Boolean = field.all { matcher.match(it) }
-}
-
-/**
- * A repeated field matcher on a specific field in a [KMessageMatcher] that matches if no
- * values match.
- */
-private class KRepeatedNoneFieldMatcher<in T : Any, in M : Message>(
-  messageClass: KClass<M>,
-  matcher: KMatcher<T>,
-  fieldDescriptor: FieldDescriptor,
-) : KRepeatedFieldMatcher<T, M>(messageClass, matcher, fieldDescriptor) {
-  override fun matchField(field: Iterable<Any>): Boolean = field.none { matcher.match(it) }
 }

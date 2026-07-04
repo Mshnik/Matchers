@@ -3,7 +3,6 @@ package com.redpup.matchers
 import com.google.common.truth.Truth.assertThat
 import com.redpup.matchers.MatcherFactory.messageMatcher
 import com.redpup.matchers.proto.Matcher
-import com.redpup.matchers.proto.MessageMatcher.FieldMatcher.FieldMatchType
 import com.redpup.matchers.proto.MessageMatcherKt.fieldMatcher
 import com.redpup.matchers.proto.matcher
 import com.redpup.matchers.proto.messageMatcher
@@ -25,7 +24,6 @@ class MatcherDslTest {
         fields += fieldMatcher {
           fieldNumber = 2
           fieldName = "int32_value"
-          matchType = FieldMatchType.SINGLE_FIELD
           matcher = matcher {
             valueMatcher = valueMatcher {
               int32Value = 42
@@ -47,52 +45,12 @@ class MatcherDslTest {
   }
 
   @Test
-  fun `repeatedField overloads map correctly across all distinct collection strategies`() {
-    val expected = matcher {
-      messageMatcher = messageMatcher {
-        messageName = "com.redpup.matchers.testing.TestMessage"
-
-        fields += fieldMatcher {
-          fieldNumber = 8
-          fieldName = "int32_values"
-          matchType = FieldMatchType.REPEATED_FIELD_ANY
-          matcher = matcher { constantMatcher = true }
-        }
-        fields += fieldMatcher {
-          fieldNumber = 8
-          fieldName = "int32_values"
-          matchType = FieldMatchType.REPEATED_FIELD_ALL
-          matcher = matcher { constantMatcher = true }
-        }
-        fields += fieldMatcher {
-          fieldNumber = 8
-          fieldName = "int32_values"
-          matchType = FieldMatchType.REPEATED_FIELD_NONE
-          matcher = matcher { constantMatcher = true }
-        }
-      }
-    }
-
-    val actual = Matcher.newBuilder().messageMatcher(descriptor) {
-      // Test string lookup strategy
-      "int32_values".any { constantMatcher = true }
-      // Test integer number lookup strategy
-      8.all { constantMatcher = true }
-      // Test explicit FieldDescriptor lookup strategy
-      descriptor.findFieldByNumber(8).none { constantMatcher = true }
-    }.build()
-
-    assertThat(actual).isEqualTo(expected)
-  }
-
-  @Test
   fun `dsl factory object method builds freestanding message matchers cleanly`() {
     val expectedFreestanding = messageMatcher {
       messageName = "com.redpup.matchers.testing.TestMessage"
       fields += fieldMatcher {
         fieldNumber = 1
         fieldName = "bool_value"
-        matchType = FieldMatchType.SINGLE_FIELD
         matcher = matcher { constantMatcher = false }
       }
     }

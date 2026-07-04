@@ -16,7 +16,8 @@ message Matcher {
     MessageMatcher message_matcher = 5;
 
     Matcher not_matcher = 6;
-    CombiningMatcher combining_matcher = 7;
+    CollectionMatcher collection_matcher = 7;
+    CombiningMatcher combining_matcher = 8;
   }
 }
 
@@ -85,23 +86,23 @@ message MessageMatcher {
   message FieldMatcher {
     int32 field_number = 1;
     string field_name = 2;
-
-    // How the matcher should be applied to the field.
-    enum FieldMatchType {
-      FIELD_MATCH_TYPE_UNSET = 0;
-      SINGLE_FIELD = 1;
-      REPEATED_FIELD_ANY = 2;
-      REPEATED_FIELD_ALL = 3;
-      REPEATED_FIELD_NONE = 4;
-    }
-    FieldMatchType match_type = 3;
-    Matcher matcher = 4;
+    Matcher matcher = 3;
   }
 
   // Fields that must match for the MessageMatcher to match.
   // Results are AND'ed: all fields must match for the surrounding matcher to
   // match.
   repeated FieldMatcher fields = 2;
+}
+
+// A matcher on that matches on a Collection<T> (or Iterable<T>, List<T>, etc)
+// of input elements.
+message CollectionMatcher {
+  oneof matcher {
+    Matcher any = 1;
+    Matcher all = 2;
+    Matcher none = 3;
+  }
 }
 
 // A Matcher wrapping a collection of other matchers and combining their results.

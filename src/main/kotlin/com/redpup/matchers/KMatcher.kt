@@ -4,12 +4,17 @@ import com.google.protobuf.Message
 import com.redpup.matchers.impl.*
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.Matcher.MatcherCase
+import com.redpup.matchers.util.KTypes.isInstance
+import com.redpup.matchers.util.KTypes.isSubclassOf
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.full.createType
 
 /** A type-safe compiled [Matcher] that accepts inputs of type [T]. */
 abstract class KMatcher<in T : Any>(
   val expectedClass: KClass<in T>,
   private var matcher: Matcher? = null,
+  internal val expectedType: KType = expectedClass.createType(nullable = false),
 ) {
   /** The proto representation of this [KMatcher], building if necessary. */
   val proto: Matcher
@@ -26,8 +31,8 @@ abstract class KMatcher<in T : Any>(
 
   /** Safely tests an arbitrary [value]. */
   fun match(value: Any): Boolean {
-    check(expectedClass.isInstance(value)) {
-      "Expected instance of ${expectedClass.simpleName}, found $value."
+    check(value isInstance expectedType) {
+      "Expected instance of $expectedType, found $value."
     }
     @Suppress("UNCHECKED_CAST")
     return matchTyped(value as T)
@@ -48,7 +53,11 @@ abstract class KMatcher<in T : Any>(
   }
 
   companion object {
-    fun <T : Any> compile(matcher: Matcher, expectedClass: KClass<T>): KMatcher<T> =
+    fun <T : Any> compile(
+      matcher: Matcher,
+      expectedClass: KClass<T>,
+      expectedType: KType = expectedClass.createType(),
+    ): KMatcher<T> =
       when (matcher.matcherCase) {
         MatcherCase.CONSTANT_MATCHER -> KConstantMatcher(matcher)
         MatcherCase.VALUE_MATCHER -> KValueMatcher.compile(matcher, expectedClass)
@@ -62,7 +71,7 @@ abstract class KMatcher<in T : Any>(
         }
 
         MatcherCase.MESSAGE_MATCHER -> {
-          check(Message::class.java.isAssignableFrom(expectedClass.java)) {
+          check(expectedType isSubclassOf Message::class) {
             "Expected subtype of Message, found $expectedClass"
           }
           @Suppress("UNCHECKED_CAST") // Safe after above validation.
@@ -70,6 +79,19 @@ abstract class KMatcher<in T : Any>(
         }
 
         MatcherCase.NOT_MATCHER -> KNotMatcher(matcher, expectedClass)
+        MatcherCase.COLLECTION_MATCHER -> {
+          check(expectedType isSubclassOf Iterable::class) {
+            "Expected subtype of Iterable, found $expectedClass"
+          }
+
+          @Suppress("UNCHECKED_CAST") // Safe after above validation.
+          KCollectionMatcher.compile(
+            matcher,
+            expectedClass as KClass<Iterable<Any>>,
+            expectedType
+          ) as KMatcher<T>
+        }
+
         MatcherCase.COMBINING_MATCHER -> KCombiningMatcher(matcher, expectedClass)
         MatcherCase.MATCHER_NOT_SET -> throw IllegalArgumentException("Unsupported matcher: $matcher")
         null -> throw NullPointerException()
