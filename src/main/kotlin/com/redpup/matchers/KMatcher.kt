@@ -80,14 +80,14 @@ abstract class KMatcher<in T : Any>(
 
         MatcherCase.NOT_MATCHER -> KNotMatcher(matcher, expectedClass)
         MatcherCase.COLLECTION_MATCHER -> {
-          check(expectedType isSubclassOf Iterable::class) {
+          check(expectedType isSubclassOf Collection::class) {
             "Expected subtype of Iterable, found $expectedClass"
           }
 
           @Suppress("UNCHECKED_CAST") // Safe after above validation.
           KCollectionMatcher.compile(
             matcher,
-            expectedClass as KClass<Iterable<Any>>,
+            expectedClass as KClass<Collection<Any>>,
             expectedType
           ) as KMatcher<T>
         }

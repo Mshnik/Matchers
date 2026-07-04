@@ -5,6 +5,8 @@ package com.redpup.matchers;
 option java_multiple_files = true;
 option java_package = "com.redpup.matchers.proto";
 
+import "google/protobuf/empty.proto";
+
 // Top level matcher message and the main entry point
 // to the matcher framework.
 message Matcher {
@@ -99,9 +101,16 @@ message MessageMatcher {
 // of input elements.
 message CollectionMatcher {
   oneof matcher {
+    // Matches if any element in the collection matches.
     Matcher any = 1;
+    // Matches if all elements in the collection matches.
     Matcher all = 2;
+    // Matches if no elements in the collection matches.
     Matcher none = 3;
+    // Matches if the collection is empty.
+    google.protobuf.Empty empty = 4;
+    // Matches if the size of the collection matches
+    Matcher size = 5;
   }
 }
 
