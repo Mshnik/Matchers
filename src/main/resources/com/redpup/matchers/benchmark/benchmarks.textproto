@@ -1,0 +1,141 @@
+# proto-file: com/redpup/matchers/benchmark/benchmark.proto
+# proto-message: MatcherBenchmarks
+
+# Case 1: Basic Numeric and String Primitives via MessageMatcher
+benchmark {
+  name: "primitive_numeric_and_string"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "string_value"
+        matcher {
+          string_matcher {
+            case_sensitive: CASE_SENSITIVE
+            value: "active"
+          }
+        }
+      }
+      fields {
+        field_name: "int32_value"
+        matcher {
+          not_matcher {
+            value_matcher {
+              int32_value: 0
+            }
+          }
+        }
+      }
+    }
+  }
+  # Match Payload
+  input {
+    string_value: "active"
+    int32_value: 42
+  }
+  # Non-Match Payload (Fails immediately on the string match check)
+  input {
+    string_value: "inactive"
+    int32_value: 42
+  }
+}
+
+# Case 2: Complex Collections via Bipartite Matching (contains_elements)
+benchmark {
+  name: "collection_contains_distinct"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "string_values"
+        matcher {
+          collection_matcher {
+            contains_elements {
+              matchers {
+                string_matcher {
+                  case_sensitive: CASE_SENSITIVE
+                  starts_with: "prefix_"
+                }
+              }
+              matchers {
+                value_in_set_matcher {
+                  string_values {
+                    values: "match_a"
+                    values: "match_b"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  # Match Payload
+  input {
+    string_values: "prefix_test"
+    string_values: "match_b"
+  }
+  # Non-Match Payload (Elements don't meet the bipartite mapping requirement)
+  input {
+    string_values: "prefix_test"
+    string_values: "unrelated_value"
+  }
+}
+
+# Case 3: Deeply Nested Structural Trees (Using message_value recursive loops)
+benchmark {
+  name: "nested_message_hierarchy"
+  matcher {
+    message_matcher {
+      message_name: "com.redpup.matchers.testing.proto.TestMessage"
+      fields {
+        field_name: "message_value"
+        matcher {
+          message_matcher {
+            message_name: "com.redpup.matchers.testing.proto.TestMessage"
+            fields {
+              field_name: "enum_value"
+              matcher {
+                value_matcher {
+                  enum_value: 1 # Maps to TEST_ENUM_1 at runtime
+                }
+              }
+            }
+            fields {
+              field_name: "message_value"
+              matcher {
+                message_matcher {
+                  message_name: "com.redpup.matchers.testing.proto.TestMessage"
+                  fields {
+                    field_name: "string_value"
+                    matcher {
+                      string_matcher {
+                        case_sensitive: CASE_INSENSITIVE
+                        pattern: "^[0-9a-fA-F]{8}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  # Match Payload
+  input {
+    message_value {
+      enum_value: TEST_ENUM_1
+      message_value { string_value: "a1b2c3d4" }
+    }
+  }
+  # Non-Match Payload (Fails deep leaf node string pattern check)
+  input {
+    message_value {
+      enum_value: TEST_ENUM_1
+      message_value { string_value: "invalid-id" }
+    }
+  }
+}

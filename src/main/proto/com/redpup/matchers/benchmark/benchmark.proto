@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package com.redpup.matchers.benchmark;
+
+option java_multiple_files = true;
+option java_package = "com.redpup.matchers.benchmark.proto";
+
+import "com/redpup/matchers/matcher.proto";
+import "com/redpup/matchers/testing/test.proto";
+
+// A benchmark to run.
+message MatcherBenchmark {
+  string name = 1;
+  Matcher matcher = 2;
+  repeated testing.TestMessage input = 3;
+}
+
+// A list of benchmarks to run.
+message  MatcherBenchmarks {
+  repeated MatcherBenchmark benchmark = 1;
+}

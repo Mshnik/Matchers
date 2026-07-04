@@ -1,11 +1,14 @@
 package com.redpup.matchers.benchmark
 
+import com.google.protobuf.TextFormat
 import com.redpup.matchers.*
+import com.redpup.matchers.benchmark.proto.MatcherBenchmarks
 import com.redpup.matchers.proto.Matcher
-import com.redpup.matchers.proto.matcher
 import com.redpup.matchers.testing.proto.TestMessage
+import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations.*
+import org.openjdk.jmh.infra.Blackhole
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -15,63 +18,52 @@ import org.openjdk.jmh.annotations.*
 @Fork(1)
 open class MatcherBenchmark {
 
-  // --- Benchmark States ---
+  // JMH parameter matrix mapping directly to the 'name' fields in your textproto.
+  // Add or remove names here to match your target execution suite.
+  @Param("primitive_numeric_and_string", "collection_contains_distinct", "nested_message_hierarchy")
+  lateinit var benchmarkName: String
+
   private lateinit var sampleProto: Matcher
   private lateinit var compiledEngine: KMatcher<TestMessage>
-  private lateinit var matchingMessage: TestMessage
-  private lateinit var nonMatchingMessage: TestMessage
+  private lateinit var targetInputs: List<TestMessage>
 
   @Setup(Level.Trial)
   fun setUp() {
-    // 1. Build the raw Proto structural graph rule
-    sampleProto = matcher {
-      messageMatcher(TestMessage.getDescriptor()) {
-        "string_value" value "active"
-        "int32_value".matches<Int> {
-          not { value(0) }
-        }
-        "string_values" matchesCollection {
-          containsDistinct {
-            matches { startsWith("prefix_") }
-            matches { inSet(setOf("match_a", "match_b")) }
-          }
-        }
-      }
+    // Locate and parse the textproto from the project resources
+    val resourcePath = "/com/redpup/matchers/benchmark/benchmarks.textproto"
+    val resourceStream = javaClass.getResourceAsStream(resourcePath)
+      ?: throw IllegalArgumentException("Could not find benchmark textproto at: $resourcePath")
+
+    val benchmarksBuilder = MatcherBenchmarks.newBuilder()
+    InputStreamReader(resourceStream, Charsets.UTF_8).use { reader ->
+      TextFormat.getParser().merge(reader, benchmarksBuilder)
     }
 
-    // 2. Pre-compile an engine variant to isolate Match Time testing
+    // Filter out the specific scenario configured for this benchmark thread invocation
+    val selectedCase =
+      benchmarksBuilder.build().benchmarkList.firstOrNull { it.name == benchmarkName }
+        ?: throw IllegalStateException("No defined textproto scenario matching parameter: '$benchmarkName'")
+
+    // Extract rules, pre-compile engine variants, and isolate input evaluation data
+    sampleProto = selectedCase.matcher
     compiledEngine = KMatcher.compile(sampleProto)
-
-    // 3. Pre-bake test data inputs
-    matchingMessage = TestMessage.newBuilder()
-      .setStringValue("active")
-      .setInt32Value(42)
-      .build()
-
-    nonMatchingMessage = TestMessage.newBuilder()
-      .setStringValue("inactive")
-      .setInt32Value(0)
-      .build()
+    targetInputs = selectedCase.inputList
   }
 
   // --- Case 1: Measuring Compile Time ---
-  // Measures only the overhead of indexing and building the KMatcher engine
+  // Overheads of indexing and generating the KMatcher state machine for this specific rule structure
   @Benchmark
   fun benchmarkCompileTime(): KMatcher<TestMessage> {
     return KMatcher.compile(sampleProto)
   }
 
-  // --- Case 2: Measuring Match Time (Success Path) ---
-  // Measures the runtime speed of evaluation against a matching payload
+  // --- Case 2: Measuring Match Time ---
+  // Iterates over all matching and non-matching payload variants defined inside this textproto block
   @Benchmark
-  fun benchmarkMatchTimeSuccess(): Boolean {
-    return compiledEngine.matchTyped(matchingMessage)
-  }
-
-  // --- Case 3: Measuring Match Time (Fail Fast Short-Circuit Path) ---
-  // Measures how quickly your system short-circuits on the first invalid field
-  @Benchmark
-  fun benchmarkMatchTimeFailFast(): Boolean {
-    return compiledEngine.matchTyped(TestMessage.getDefaultInstance())
+  fun benchmarkMatchTime(bh: Blackhole) {
+    // A standard indexed loop prevents iterator allocation overhead in the hot path
+    for (element in targetInputs) {
+      bh.consume(compiledEngine.matchTyped(element))
+    }
   }
 }
