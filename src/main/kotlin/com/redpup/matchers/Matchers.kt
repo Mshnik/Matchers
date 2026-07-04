@@ -71,6 +71,9 @@ fun TypedMatcherBuilder<Int>.inSet(elements: Iterable<Int>): Matcher.Builder =
     int32Values = int32ValueSet { values += elements }
   })
 
+@JvmName("anyOfInt")
+fun TypedMatcherBuilder<Int>.anyOf(vararg elements: Int): Matcher.Builder = inSet(elements.toList())
+
 // --- Long Type Allocations ---
 @JvmName("valueLong")
 fun TypedMatcherBuilder<Long>.value(target: Long): Matcher.Builder =
@@ -81,6 +84,10 @@ fun TypedMatcherBuilder<Long>.inSet(elements: Iterable<Long>): Matcher.Builder =
   delegate.setValueInSetMatcher(valueInSetMatcher {
     int64Values = int64ValueSet { values += elements }
   })
+
+@JvmName("anyOfLong")
+fun TypedMatcherBuilder<Long>.anyOf(vararg elements: Long): Matcher.Builder =
+  inSet(elements.toList())
 
 // --- Float Type Allocations ---
 @JvmName("valueFloat")
@@ -93,6 +100,10 @@ fun TypedMatcherBuilder<Float>.inSet(elements: Iterable<Float>): Matcher.Builder
     floatValues = floatValueSet { values += elements }
   })
 
+@JvmName("anyOfFloat")
+fun TypedMatcherBuilder<Float>.anyOf(vararg elements: Float): Matcher.Builder =
+  inSet(elements.toList())
+
 // --- Double Type Allocations ---
 @JvmName("valueDouble")
 fun TypedMatcherBuilder<Double>.value(target: Double): Matcher.Builder =
@@ -103,6 +114,10 @@ fun TypedMatcherBuilder<Double>.inSet(elements: Iterable<Double>): Matcher.Build
   delegate.setValueInSetMatcher(valueInSetMatcher {
     doubleValues = doubleValueSet { values += elements }
   })
+
+@JvmName("anyOfDouble")
+fun TypedMatcherBuilder<Double>.anyOf(vararg elements: Double): Matcher.Builder =
+  inSet(elements.toList())
 
 // --- Boolean Type Allocations ---
 @JvmName("valueBoolean")
@@ -119,6 +134,10 @@ fun TypedMatcherBuilder<String>.inSet(elements: Iterable<String>): Matcher.Build
   delegate.setValueInSetMatcher(valueInSetMatcher {
     stringValues = stringValueSet { values += elements }
   })
+
+@JvmName("anyOfString")
+fun TypedMatcherBuilder<String>.anyOf(vararg elements: String): Matcher.Builder =
+  inSet(elements.toList())
 
 fun TypedMatcherBuilder<String>.textEquals(
   text: String,

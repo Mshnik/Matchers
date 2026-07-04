@@ -14,7 +14,7 @@ import kotlin.reflect.full.createType
 abstract class KMatcher<in T : Any>(
   val expectedClass: KClass<in T>,
   private var matcher: Matcher? = null,
-  internal val expectedType: KType = expectedClass.createType(nullable = false),
+  private val expectedType: KType = expectedClass.createType(nullable = false),
 ) {
   /** The proto representation of this [KMatcher], building if necessary. */
   val proto: Matcher
