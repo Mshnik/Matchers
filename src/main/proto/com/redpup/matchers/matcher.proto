@@ -111,6 +111,17 @@ message CollectionMatcher {
     google.protobuf.Empty empty = 4;
     // Matches if the size of the collection matches
     Matcher size = 5;
+    // Matches if each inner matcher matches a unique, distinct element in the
+    // input collection (modeled as a bipartite matching assignment problem).
+    //
+    // At runtime, this executes using a backtracking search algorithm with a
+    // worst-case time complexity of O(M * E^M) where M is the number of sub-matchers
+    // and E is the size of the input collection.
+    DistinctElementsMatcher contains_elements = 6;
+  }
+
+  message DistinctElementsMatcher {
+    repeated Matcher matchers = 1;
   }
 }
 

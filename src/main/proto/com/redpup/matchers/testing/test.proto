@@ -13,13 +13,15 @@ message TestMessage {
   double double_value = 5;
   string string_value = 6;
   TestEnum enum_value = 7;
+  TestMessage message_value = 8;
 
-  repeated int32 int32_values = 8 [packed = true];
-  repeated int64 int64_values = 9 [packed = true];
-  repeated float float_values = 10 [packed = true];
-  repeated double double_values = 11 [packed = true];
-  repeated string string_values = 12;
-  repeated TestEnum enum_values = 13 [packed = true];
+  repeated int32 int32_values = 20 [packed = true];
+  repeated int64 int64_values = 21 [packed = true];
+  repeated float float_values = 22 [packed = true];
+  repeated double double_values = 23 [packed = true];
+  repeated string string_values = 24;
+  repeated TestEnum enum_values = 25 [packed = true];
+  repeated TestMessage message_values = 26;
 }
 
 enum TestEnum {
