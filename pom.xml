@@ -18,10 +18,10 @@
     <maven.compiler.release>21</maven.compiler.release>
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
     <kotlin.code.style>official</kotlin.code.style>
-    <kotlin.compiler.jvmTarget>21</kotlin.compiler.jvmTarget>
     <javafx.version>21</javafx.version>
     <proto.srcdir>src/main/proto</proto.srcdir>
     <proto.outdir>target/generated-sources</proto.outdir>
+    <jmh.version>1.37</jmh.version>
   </properties>
 
   <repositories>
@@ -44,7 +44,6 @@
         <protoc.executable>/opt/homebrew/bin/protoc</protoc.executable>
       </properties>
       <dependencies>
-        <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
         <dependency>
           <groupId>com.google.protobuf</groupId>
           <artifactId>protobuf-java</artifactId>
@@ -55,7 +54,6 @@
           <artifactId>protobuf-java-util</artifactId>
           <version>4.33.1</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.google.protobuf/protoc -->
         <dependency>
           <groupId>com.google.protobuf</groupId>
           <artifactId>protoc</artifactId>
@@ -83,6 +81,21 @@
         <version>${kotlin.version}</version>
         <executions>
           <execution>
+            <id>kapt</id>
+            <goals>
+              <goal>kapt</goal>
+            </goals>
+            <configuration>
+              <annotationProcessorPaths>
+                <annotationProcessorPath>
+                  <groupId>org.openjdk.jmh</groupId>
+                  <artifactId>jmh-generator-annprocess</artifactId>
+                  <version>${jmh.version}</version>
+                </annotationProcessorPath>
+              </annotationProcessorPaths>
+            </configuration>
+          </execution>
+          <execution>
             <id>compile</id>
             <phase>process-sources</phase>
             <goals>
@@ -106,6 +119,28 @@
           <release>${maven.compiler.release}</release>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/protobuf/java</source>
+                <source>${project.build.directory}/generated-sources/protobuf/kotlin</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -121,6 +156,7 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>${maven-surefire-plugin.version}</version>
       </plugin>
+
       <plugin>
         <groupId>org.xolstice.maven.plugins</groupId>
         <artifactId>protobuf-maven-plugin</artifactId>
@@ -145,26 +181,61 @@
           </execution>
         </executions>
       </plugin>
+
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.5.0</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.1</version>
         <executions>
           <execution>
-            <id>add-source</id>
-            <phase>generate-sources</phase>
+            <phase>package</phase>
             <goals>
-              <goal>add-source</goal>
+              <goal>shade</goal>
             </goals>
             <configuration>
-              <sources>
-                <source>
-                  ${project.build.directory}/generated-sources/protobuf/java
-                </source>
-                <source>
-                  ${project.build.directory}/generated-sources/protobuf/kotlin
-                </source>
-              </sources>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+
+              <finalName>benchmarks</finalName>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>org.openjdk.jmh.Main</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.1</version>
+        <executions>
+          <execution>
+            <id>run-benchmarks</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <argument>-jar</argument>
+                <argument>${project.build.directory}/benchmarks.jar</argument>
+                <argument>com.redpup.matchers.benchmark.MatcherBenchmark
+                </argument>
+              </arguments>
             </configuration>
           </execution>
         </executions>
@@ -174,7 +245,6 @@
       <resource>
         <directory>src/main/resources</directory>
       </resource>
-
       <resource>
         <directory>src/main/proto</directory>
         <includes>
@@ -185,6 +255,12 @@
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-core</artifactId>
+      <version>${jmh.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-reflect</artifactId>
@@ -218,37 +294,31 @@
       <artifactId>kotlin-stdlib</artifactId>
       <version>${kotlin.version}</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-collections4 -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
       <version>4.4</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/com.google.googlejavaformat/google-java-format -->
     <dependency>
       <groupId>com.google.googlejavaformat</groupId>
       <artifactId>google-java-format</artifactId>
       <version>1.17.0</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/junit/junit -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.13.1</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>33.5.0-jre</version>
     </dependency>
-    <!-- https://truth.dev/ -->
     <dependency>
       <groupId>com.google.truth</groupId>
       <artifactId>truth</artifactId>
       <version>1.0</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/com.google.inject/guice -->
     <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
@@ -259,7 +329,6 @@
       <artifactId>javax.inject</artifactId>
       <version>1</version>
     </dependency>
-    <!-- Mockito -->
     <dependency>
       <groupId>org.mockito.kotlin</groupId>
       <artifactId>mockito-kotlin</artifactId>
@@ -272,14 +341,12 @@
       <version>13.0</version>
       <scope>compile</scope>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/com.google.auto.value/auto-value -->
     <dependency>
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
       <version>1.7.4</version>
       <scope>provided</scope>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/com.google.auto/auto-common -->
     <dependency>
       <groupId>com.google.auto</groupId>
       <artifactId>auto-common</artifactId>
@@ -291,6 +358,5 @@
       <version>28.1-jre</version>
       <scope>test</scope>
     </dependency>
-    <!-- https://www.tutorialspoint.com/how-to-convert-java-object-to-json-using-jackson-library -->
   </dependencies>
 </project>

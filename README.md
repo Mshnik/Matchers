@@ -248,9 +248,9 @@ blocks applied.
 |:------------------------------------------|:-----------------|:----------------------------------------------------------------------------------|
 | `ValueMatcher`                            | $O(1)$           | Direct primitive equality check. No heap allocations.                             |
 | `ValueInSetMatcher`                       | $O(1)$           | Backed internally by optimized hashed lookup sets.                                |
-| `StringMatcher` (Regex)                   | $O(N)$           | Linear to string length ($N$). Patterns are pre-compiled.                         |
+| `StringMatcher` (Regex)                   | Varies           | Generally linear to string length ($N$), but can grow with pattern complexity.    |
 | `MessageMatcher`                          | $O(F)$           | Linear to number of constraints ($F$) evaluated. Short-circuits on first failure. |
-| `CombiningMatcher`                        | $O(M)$           | Evaluates $M$ matchers. Employs lazy boolean short-circuit evaluation.            |
+| `CombiningMatcher`                        | $O(M)$           | Evaluates $M$ matchers. Short-circuits on first failure.                          |
 | `CollectionMatcher` (`contains_elements`) | $O(M \cdot E^M)$ | Modeled as a bipartite matching assignment problem. Uses backtracking.            |
 
 ### Performance Benchmarks
