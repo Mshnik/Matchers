@@ -36,7 +36,7 @@ class MatcherDslTest {
   fun testCombinerLogicGates() {
     val dslBuilt = typedMatcher<Int> {
       anyOf {
-        matches { matchesValue(10) }
+        matches { value(10) }
         matches { inSet(listOf(20, 30)) }
       }
     }
@@ -60,10 +60,10 @@ class MatcherDslTest {
   fun testComplexMessageTreeStructure() {
     // Verified using your updated untypedMessageMatcher mapping engine entrypoint
     val dslBuilt = matcher {
-      untypedMessageMatcher(TestMessage.getDescriptor()) {
-        "string_value" matchesValue "active"
-        "int32_value" matches {
-          not { matchesValue(0) }
+      messageMatcher(TestMessage.getDescriptor()) {
+        "string_value" value "active"
+        "int32_value".matches<Int> {
+          not { value(0) }
         }
         "string_values" matchesCollection {
           containsDistinct {
@@ -117,9 +117,9 @@ class MatcherDslTest {
   @Test
   fun testNestedMessageMatchers() {
     val dslBuilt = matcher {
-      untypedMessageMatcher(TestMessage.getDescriptor()) {
+      messageMatcher(TestMessage.getDescriptor()) {
         "message_value" matchesMessage {
-          "bool_value" matchesValue true
+          "bool_value" value true
         }
       }
     }
@@ -153,7 +153,7 @@ class MatcherDslTest {
     // Verifies the TypedMatcherBuilder context receiver wrapper variant
     val dslBuilt = typedMatcher<TestMessage> {
       typedMessageMatcher(TestMessage.getDescriptor()) {
-        "int32_value" matchesValue 42
+        "int32_value" value 42
       }
     }
 

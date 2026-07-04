@@ -36,16 +36,23 @@ inline fun <reified T> typedMatcher(crossinline block: TypedMatcherBuilder<T>.()
 }
 
 /** Integrates descriptor-driven [MessageMatcher] directly into any typed or untyped [Matcher.Builder]. */
-inline fun Matcher.Builder.untypedMessageMatcher(
+inline fun Matcher.Builder.messageMatcher(
   descriptor: Descriptor,
   crossinline block: MessageMatcherBuilder.() -> Unit,
 ): Matcher.Builder = setMessageMatcher(MessageMatcherBuilder.build(descriptor, block))
+
+inline fun MatcherKt.Dsl.messageMatcher(
+  descriptor: Descriptor,
+  crossinline block: MessageMatcherBuilder.() -> Unit,
+) {
+  this.messageMatcher = MessageMatcherBuilder.build(descriptor, block)
+}
 
 inline fun <T> TypedMatcherBuilder<T>.typedMessageMatcher(
   descriptor: Descriptor,
   crossinline block: MessageMatcherBuilder.() -> Unit,
 ): TypedMatcherBuilder<T> {
-  delegate.untypedMessageMatcher(descriptor, block)
+  delegate.messageMatcher(descriptor, block)
   return this
 }
 
@@ -55,7 +62,7 @@ inline fun <T> TypedMatcherBuilder<T>.typedMessageMatcher(
 
 // --- Int Type Allocations ---
 @JvmName("valueInt")
-fun TypedMatcherBuilder<Int>.matchesValue(target: Int): Matcher.Builder =
+fun TypedMatcherBuilder<Int>.value(target: Int): Matcher.Builder =
   delegate.setValueMatcher(valueMatcher { int32Value = target })
 
 @JvmName("inSetInt")
@@ -66,7 +73,7 @@ fun TypedMatcherBuilder<Int>.inSet(elements: Iterable<Int>): Matcher.Builder =
 
 // --- Long Type Allocations ---
 @JvmName("valueLong")
-fun TypedMatcherBuilder<Long>.matchesValue(target: Long): Matcher.Builder =
+fun TypedMatcherBuilder<Long>.value(target: Long): Matcher.Builder =
   delegate.setValueMatcher(valueMatcher { int64Value = target })
 
 @JvmName("inSetLong")
@@ -77,7 +84,7 @@ fun TypedMatcherBuilder<Long>.inSet(elements: Iterable<Long>): Matcher.Builder =
 
 // --- Float Type Allocations ---
 @JvmName("valueFloat")
-fun TypedMatcherBuilder<Float>.matchesValue(target: Float): Matcher.Builder =
+fun TypedMatcherBuilder<Float>.value(target: Float): Matcher.Builder =
   delegate.setValueMatcher(valueMatcher { floatValue = target })
 
 @JvmName("inSetFloat")
@@ -88,7 +95,7 @@ fun TypedMatcherBuilder<Float>.inSet(elements: Iterable<Float>): Matcher.Builder
 
 // --- Double Type Allocations ---
 @JvmName("valueDouble")
-fun TypedMatcherBuilder<Double>.matchesValue(target: Double): Matcher.Builder =
+fun TypedMatcherBuilder<Double>.value(target: Double): Matcher.Builder =
   delegate.setValueMatcher(valueMatcher { doubleValue = target })
 
 @JvmName("inSetDouble")
@@ -99,12 +106,12 @@ fun TypedMatcherBuilder<Double>.inSet(elements: Iterable<Double>): Matcher.Build
 
 // --- Boolean Type Allocations ---
 @JvmName("valueBoolean")
-fun TypedMatcherBuilder<Boolean>.matchesValue(target: Boolean): Matcher.Builder =
+fun TypedMatcherBuilder<Boolean>.value(target: Boolean): Matcher.Builder =
   delegate.setValueMatcher(valueMatcher { boolValue = target })
 
 // --- String Type Allocations ---
 @JvmName("valueString")
-fun TypedMatcherBuilder<String>.matchesValue(target: String): Matcher.Builder =
+fun TypedMatcherBuilder<String>.value(target: String): Matcher.Builder =
   delegate.setValueMatcher(valueMatcher { stringValue = target })
 
 @JvmName("inSetString")
@@ -220,25 +227,25 @@ class MessageMatcherBuilder @PublishedApi internal constructor(
   infix fun <F> Int.matches(block: TypedMatcherBuilder<F>.() -> Unit) = addFieldRule(this, block)
 
   // --- Type-Inferred Field Shorthands ---
-  infix fun FieldDescriptor.matchesValue(value: Int) = matches { matchesValue(value) }
-  infix fun FieldDescriptor.matchesValue(value: String) = matches { matchesValue(value) }
-  infix fun FieldDescriptor.matchesValue(value: Boolean) = matches { matchesValue(value) }
+  infix fun FieldDescriptor.value(value: Int) = matches { value(value) }
+  infix fun FieldDescriptor.value(value: String) = matches { value(value) }
+  infix fun FieldDescriptor.value(value: Boolean) = matches { value(value) }
 
-  infix fun String.matchesValue(value: Int) = matches { matchesValue(value) }
-  infix fun String.matchesValue(value: String) = matches { matchesValue(value) }
-  infix fun String.matchesValue(value: Boolean) = matches { matchesValue(value) }
+  infix fun String.value(value: Int) = matches { value(value) }
+  infix fun String.value(value: String) = matches { value(value) }
+  infix fun String.value(value: Boolean) = matches { value(value) }
 
   // --- Hierarchical Messaging Nested Layout Pass-throughs ---
   inline fun FieldDescriptor.matchesMessage(crossinline block: MessageMatcherBuilder.() -> Unit) {
     matches<Any> {
-      delegate.untypedMessageMatcher(this@matchesMessage.messageType, block)
+      delegate.messageMatcher(this@matchesMessage.messageType, block)
     }
   }
 
   inline infix fun String.matchesMessage(crossinline block: MessageMatcherBuilder.() -> Unit) {
     val descriptorForField = this@matchesMessage.toDescriptor()
     matches<Any> {
-      delegate.untypedMessageMatcher(descriptorForField.messageType, block)
+      delegate.messageMatcher(descriptorForField.messageType, block)
     }
   }
 
