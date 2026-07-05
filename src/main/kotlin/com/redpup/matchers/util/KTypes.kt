@@ -2,6 +2,8 @@ package com.redpup.matchers.util
 
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.full.allSupertypes
+import kotlin.reflect.full.starProjectedType
 
 /** Utilities for working with [KType]s. */
 internal object KTypes {
@@ -12,6 +14,32 @@ internal object KTypes {
 
     // Fall back to Java's hierarchy inspector to see if classA extends/implements interfaceTarget
     return interfaceTarget.java.isAssignableFrom(classA.java)
+  }
+
+  /**
+   * Checks if this KType implements Comparable of itself (i.e., T : Comparable<T>).
+   * Returns true for types like String, Int, Instant, or custom data classes implementing Comparable.
+   */
+  fun KType.isComparableOfSelf(): Boolean {
+    // Extract the raw class classifier (e.g., String, Int, or custom classes)
+    val rawClass = this.classifier as? KClass<*> ?: return false
+
+    // Fast-path check: If it doesn't even implement Comparable at a raw Java level, exit early.
+    if (!Comparable::class.java.isAssignableFrom(rawClass.java)) {
+      return false
+    }
+
+    // Scan all supertypes in Kotlin's reflection model to find the specific Comparable
+    // instantiation
+    val comparableSupertype = (rawClass.allSupertypes + rawClass.starProjectedType)
+      .firstOrNull { it.classifier == Comparable::class } ?: return false
+
+    // Inspect the generic argument of Comparable<T>
+    // comparableSupertype.arguments[0] represents the 'T' in Comparable<T>
+    val genericArgumentType = comparableSupertype.arguments.firstOrNull()?.type ?: return false
+
+    // Verify that the generic argument matches the original raw class type
+    return genericArgumentType.classifier == rawClass
   }
 
   /** Checks if this is a structurally valid instance of [type]. */

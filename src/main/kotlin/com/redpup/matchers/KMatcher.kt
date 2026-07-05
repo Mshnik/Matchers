@@ -4,6 +4,7 @@ import com.google.protobuf.Message
 import com.redpup.matchers.impl.*
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.Matcher.MatcherCase
+import com.redpup.matchers.util.KTypes.isComparableOfSelf
 import com.redpup.matchers.util.KTypes.isInstance
 import com.redpup.matchers.util.KTypes.isSubclassOf
 import kotlin.reflect.KClass
@@ -62,6 +63,17 @@ abstract class KMatcher<in T : Any>(
         MatcherCase.CONSTANT_MATCHER -> KConstantMatcher(matcher)
         MatcherCase.VALUE_MATCHER -> KValueMatcher.compile(matcher, expectedClass)
         MatcherCase.VALUE_IN_SET_MATCHER -> KValueInSetMatcher.compile(matcher, expectedClass)
+        MatcherCase.COMPARISON_MATCHER -> {
+          check(expectedType.isComparableOfSelf()) {
+            "Expected subtype of Comparable<T>, found $expectedType"
+          }
+          @Suppress("UNCHECKED_CAST")
+          val comparableClass = expectedClass as KClass<out Comparable<Any>>
+
+          @Suppress("UNCHECKED_CAST")
+          KComparisonMatcher.compile(matcher, comparableClass) as KMatcher<T>
+        }
+
         MatcherCase.STRING_MATCHER -> {
           check(expectedClass == String::class) {
             "Expected String class, found $expectedClass"
@@ -72,7 +84,7 @@ abstract class KMatcher<in T : Any>(
 
         MatcherCase.MESSAGE_MATCHER -> {
           check(expectedType isSubclassOf Message::class) {
-            "Expected subtype of Message, found $expectedClass"
+            "Expected subtype of Message, found $expectedType"
           }
           @Suppress("UNCHECKED_CAST") // Safe after above validation.
           KMessageMatcher.compile(matcher, expectedClass as KClass<Message>) as KMatcher<T>
@@ -81,7 +93,7 @@ abstract class KMatcher<in T : Any>(
         MatcherCase.NOT_MATCHER -> KNotMatcher(matcher, expectedClass)
         MatcherCase.COLLECTION_MATCHER -> {
           check(expectedType isSubclassOf Collection::class) {
-            "Expected subtype of Iterable, found $expectedClass"
+            "Expected subtype of Iterable, found $expectedType"
           }
 
           @Suppress("UNCHECKED_CAST") // Safe after above validation.

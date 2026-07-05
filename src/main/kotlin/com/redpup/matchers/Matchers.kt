@@ -3,9 +3,11 @@ package com.redpup.matchers
 import com.google.protobuf.Descriptors.Descriptor
 import com.google.protobuf.Descriptors.FieldDescriptor
 import com.google.protobuf.Empty
+import com.google.protobuf.Internal.EnumLite
 import com.redpup.matchers.proto.*
 import com.redpup.matchers.proto.CollectionMatcherKt.distinctElementsMatcher
 import com.redpup.matchers.proto.CombiningMatcher.Combine
+import com.redpup.matchers.proto.ComparisonMatcher.Comparison
 import com.redpup.matchers.proto.MessageMatcher.FieldMatcher
 import com.redpup.matchers.proto.StringMatcher.CaseSensitivity
 import com.redpup.matchers.proto.ValueInSetMatcherKt.doubleValueSet
@@ -74,6 +76,34 @@ fun TypedMatcherBuilder<Int>.inSet(elements: Iterable<Int>): Matcher.Builder =
 @JvmName("anyOfInt")
 fun TypedMatcherBuilder<Int>.anyOf(vararg elements: Int): Matcher.Builder = inSet(elements.toList())
 
+@JvmName("greaterThanInt")
+fun TypedMatcherBuilder<Int>.greaterThan(target: Int): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GT
+    int32Value = target
+  })
+
+@JvmName("greaterThanOrEqualInt")
+fun TypedMatcherBuilder<Int>.greaterThanOrEqual(target: Int): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GE
+    int32Value = target
+  })
+
+@JvmName("lessThanInt")
+fun TypedMatcherBuilder<Int>.lessThan(target: Int): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LT
+    int32Value = target
+  })
+
+@JvmName("lessThanOrEqualInt")
+fun TypedMatcherBuilder<Int>.lessThanOrEqual(target: Int): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LE
+    int32Value = target
+  })
+
 // --- Long Type Allocations ---
 @JvmName("valueLong")
 fun TypedMatcherBuilder<Long>.value(target: Long): Matcher.Builder =
@@ -88,6 +118,34 @@ fun TypedMatcherBuilder<Long>.inSet(elements: Iterable<Long>): Matcher.Builder =
 @JvmName("anyOfLong")
 fun TypedMatcherBuilder<Long>.anyOf(vararg elements: Long): Matcher.Builder =
   inSet(elements.toList())
+
+@JvmName("greaterThanLong")
+fun TypedMatcherBuilder<Long>.greaterThan(target: Long): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GT
+    int64Value = target
+  })
+
+@JvmName("greaterThanOrEqualLong")
+fun TypedMatcherBuilder<Long>.greaterThanOrEqual(target: Long): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GE
+    int64Value = target
+  })
+
+@JvmName("lessThanLong")
+fun TypedMatcherBuilder<Long>.lessThan(target: Long): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LT
+    int64Value = target
+  })
+
+@JvmName("lessThanOrEqualLong")
+fun TypedMatcherBuilder<Long>.lessThanOrEqual(target: Long): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LE
+    int64Value = target
+  })
 
 // --- Float Type Allocations ---
 @JvmName("valueFloat")
@@ -104,6 +162,34 @@ fun TypedMatcherBuilder<Float>.inSet(elements: Iterable<Float>): Matcher.Builder
 fun TypedMatcherBuilder<Float>.anyOf(vararg elements: Float): Matcher.Builder =
   inSet(elements.toList())
 
+@JvmName("greaterThanFloat")
+fun TypedMatcherBuilder<Float>.greaterThan(target: Float): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GT
+    floatValue = target
+  })
+
+@JvmName("greaterThanOrEqualFloat")
+fun TypedMatcherBuilder<Float>.greaterThanOrEqual(target: Float): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GE
+    floatValue = target
+  })
+
+@JvmName("lessThanFloat")
+fun TypedMatcherBuilder<Float>.lessThan(target: Float): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LT
+    floatValue = target
+  })
+
+@JvmName("lessThanOrEqualFloat")
+fun TypedMatcherBuilder<Float>.lessThanOrEqual(target: Float): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LE
+    floatValue = target
+  })
+
 // --- Double Type Allocations ---
 @JvmName("valueDouble")
 fun TypedMatcherBuilder<Double>.value(target: Double): Matcher.Builder =
@@ -118,6 +204,34 @@ fun TypedMatcherBuilder<Double>.inSet(elements: Iterable<Double>): Matcher.Build
 @JvmName("anyOfDouble")
 fun TypedMatcherBuilder<Double>.anyOf(vararg elements: Double): Matcher.Builder =
   inSet(elements.toList())
+
+@JvmName("greaterThanDouble")
+fun TypedMatcherBuilder<Double>.greaterThan(target: Double): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GT
+    doubleValue = target
+  })
+
+@JvmName("greaterThanOrEqualDouble")
+fun TypedMatcherBuilder<Double>.greaterThanOrEqual(target: Double): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GE
+    doubleValue = target
+  })
+
+@JvmName("lessThanDouble")
+fun TypedMatcherBuilder<Double>.lessThan(target: Double): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LT
+    doubleValue = target
+  })
+
+@JvmName("lessThanOrEqualDouble")
+fun TypedMatcherBuilder<Double>.lessThanOrEqual(target: Double): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LE
+    doubleValue = target
+  })
 
 // --- Boolean Type Allocations ---
 @JvmName("valueBoolean")
@@ -138,6 +252,34 @@ fun TypedMatcherBuilder<String>.inSet(elements: Iterable<String>): Matcher.Build
 @JvmName("anyOfString")
 fun TypedMatcherBuilder<String>.anyOf(vararg elements: String): Matcher.Builder =
   inSet(elements.toList())
+
+@JvmName("greaterThanString")
+fun TypedMatcherBuilder<String>.greaterThan(target: String): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GT
+    stringValue = target
+  })
+
+@JvmName("greaterThanOrEqualString")
+fun TypedMatcherBuilder<String>.greaterThanOrEqual(target: String): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GE
+    stringValue = target
+  })
+
+@JvmName("lessThanString")
+fun TypedMatcherBuilder<String>.lessThan(target: String): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LT
+    stringValue = target
+  })
+
+@JvmName("lessThanOrEqualString")
+fun TypedMatcherBuilder<String>.lessThanOrEqual(target: String): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LE
+    stringValue = target
+  })
 
 fun TypedMatcherBuilder<String>.textEquals(
   text: String,
@@ -176,6 +318,35 @@ fun TypedMatcherBuilder<String>.contains(
 
 fun TypedMatcherBuilder<String>.matchesRegex(patternString: String): Matcher.Builder =
   delegate.setStringMatcher(stringMatcher { pattern = patternString })
+
+// --- Enum / Extensible Type Allocations ---
+@JvmName("greaterThanEnum")
+fun <E : EnumLite> TypedMatcherBuilder<E>.greaterThan(target: E): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GT
+    enumValue = target.number
+  })
+
+@JvmName("greaterThanOrEqualEnum")
+fun <E : EnumLite> TypedMatcherBuilder<E>.greaterThanOrEqual(target: E): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_GE
+    enumValue = target.number
+  })
+
+@JvmName("lessThanEnum")
+fun <E : EnumLite> TypedMatcherBuilder<E>.lessThan(target: E): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LT
+    enumValue = target.number
+  })
+
+@JvmName("lessThanOrEqualEnum")
+fun <E : EnumLite> TypedMatcherBuilder<E>.lessThanOrEqual(target: E): Matcher.Builder =
+  delegate.setComparisonMatcher(comparisonMatcher {
+    comparison = Comparison.COMPARISON_LE
+    enumValue = target.number
+  })
 
 // --- Generic Constant Fallback ---
 fun <T> TypedMatcherBuilder<T>.always(value: Boolean): Matcher.Builder =

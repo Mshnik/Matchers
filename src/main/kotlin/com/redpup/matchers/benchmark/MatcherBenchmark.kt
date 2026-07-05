@@ -16,7 +16,7 @@ import org.openjdk.jmh.infra.Blackhole
 @Warmup(iterations = 3, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(1)
-open class MatcherBenchmark {
+internal open class MatcherBenchmark {
 
   // JMH parameter matrix mapping directly to the 'name' fields in your textproto.
   // Add or remove names here to match your target execution suite.

@@ -5,6 +5,7 @@ import com.google.protobuf.Empty
 import com.redpup.matchers.proto.*
 import com.redpup.matchers.proto.CollectionMatcherKt.distinctElementsMatcher
 import com.redpup.matchers.proto.CombiningMatcher.Combine
+import com.redpup.matchers.proto.ComparisonMatcher.Comparison
 import com.redpup.matchers.proto.MessageMatcherKt.fieldMatcher
 import com.redpup.matchers.proto.StringMatcher.CaseSensitivity
 import com.redpup.matchers.proto.ValueInSetMatcherKt.int32ValueSet
@@ -33,11 +34,43 @@ class MatcherDslTest {
   }
 
   @Test
+  fun testStandaloneRelationalComparisons() {
+    // Validate primitive bounds checks via custom DSL
+    val dslBuilt = typedMatcher<Int> {
+      greaterThan(100)
+    }
+
+    // Verify parity against pure Proto configuration
+    val nativeProtoBuilt = matcher {
+      comparisonMatcher = comparisonMatcher {
+        comparison = Comparison.COMPARISON_GT
+        int32Value = 100
+      }
+    }
+
+    assertThat(dslBuilt).isEqualTo(nativeProtoBuilt)
+
+    // Validate string bounds checks via custom DSL
+    val stringDslBuilt = typedMatcher<String> {
+      lessThanOrEqual("beta")
+    }
+
+    val stringNativeBuilt = matcher {
+      comparisonMatcher = comparisonMatcher {
+        comparison = Comparison.COMPARISON_LE
+        stringValue = "beta"
+      }
+    }
+
+    assertThat(stringDslBuilt).isEqualTo(stringNativeBuilt)
+  }
+
+  @Test
   fun testCombinerLogicGates() {
     val dslBuilt = typedMatcher<Int> {
       anyOf {
         matches { value(10) }
-        matches { inSet(listOf(20, 30)) }
+        matches { anyOf(20, 30) }
       }
     }
 
@@ -68,7 +101,7 @@ class MatcherDslTest {
         "string_values" matchesCollection {
           containsDistinct {
             matches { startsWith("prefix_") }
-            matches { inSet(setOf("match_a", "match_b")) }
+            matches { anyOf("match_a", "match_b") }
           }
         }
       }
@@ -105,6 +138,36 @@ class MatcherDslTest {
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    }
+
+    assertThat(dslBuilt).isEqualTo(nativeProtoBuilt)
+  }
+
+  @Test
+  fun testRelationalComparisonsInMessageTree() {
+    val dslBuilt = matcher {
+      messageMatcher(TestMessage.getDescriptor()) {
+        "int32_value".matches<Int> {
+          lessThan(50)
+        }
+      }
+    }
+
+    val nativeProtoBuilt = matcher {
+      messageMatcher = messageMatcher {
+        messageName = "com.redpup.matchers.testing.TestMessage"
+
+        fields += fieldMatcher {
+          fieldNumber = 2
+          fieldName = "int32_value"
+          matcher = matcher {
+            comparisonMatcher = comparisonMatcher {
+              comparison = Comparison.COMPARISON_LT
+              int32Value = 50
             }
           }
         }

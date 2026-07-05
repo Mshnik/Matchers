@@ -91,6 +91,24 @@ typedMatcher<String> {
 }
 ```
 
+### Relational Comparisons
+
+Evaluate relational inequalities against any primitive type or custom data type
+implementing Comparable<T> (such as Int, String, or custom timestamp classes).
+Enums are automatically supported by routing comparisons through their
+underlying numeric values:
+
+```kotlin
+// Matches values strictly greater than 100
+typedMatcher { greaterThan(100) }
+
+// Lexicographical string bounds checks
+typedMatcher { lessThanOrEqual("beta") }
+
+// Structural enum index threshold evaluations
+typedMatcher { greaterThan(TestEnum.TEST_ENUM_1) }
+```
+
 ### String Strategies
 
 Leverage semantic string processing with optional case-sensitivity rules:
@@ -247,6 +265,7 @@ blocks applied.
 | Matcher Type                              | Time Complexity  | Notes / Allocation Profile                                                        |
 |:------------------------------------------|:-----------------|:----------------------------------------------------------------------------------|
 | `ValueMatcher`                            | $O(1)$           | Direct primitive equality check. No heap allocations.                             |
+| `ComparisonMatcher`                       | $O(1)$           | Direct numeric/lexicographical comparison. No heap allocations.                   |
 | `ValueInSetMatcher`                       | $O(1)$           | Backed internally by optimized hashed lookup sets.                                |
 | `StringMatcher` (Regex)                   | Varies           | Generally linear to string length ($N$), but can grow with pattern complexity.    |
 | `MessageMatcher`                          | $O(F)$           | Linear to number of constraints ($F$) evaluated. Short-circuits on first failure. |

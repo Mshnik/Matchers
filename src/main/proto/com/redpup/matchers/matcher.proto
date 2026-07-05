@@ -14,12 +14,13 @@ message Matcher {
     bool constant_matcher = 1;
     ValueMatcher value_matcher = 2;
     ValueInSetMatcher value_in_set_matcher = 3;
-    StringMatcher string_matcher = 4;
-    MessageMatcher message_matcher = 5;
+    ComparisonMatcher comparison_matcher = 4;
+    StringMatcher string_matcher = 5;
+    MessageMatcher message_matcher = 6;
 
-    Matcher not_matcher = 6;
-    CollectionMatcher collection_matcher = 7;
-    CombiningMatcher combining_matcher = 8;
+    Matcher not_matcher = 7;
+    CollectionMatcher collection_matcher = 8;
+    CombiningMatcher combining_matcher = 9;
   }
 }
 
@@ -52,6 +53,29 @@ message ValueInSetMatcher {
     DoubleValueSet double_values = 4;
     StringValueSet string_values = 5;
     Int32ValueSet enum_values = 6;
+  }
+}
+
+// A matcher that matches an inequality.
+message ComparisonMatcher {
+  enum Comparison {
+    COMPARISON_UNSET = 0;
+    COMPARISON_EQ = 1;
+    COMPARISON_NE = 2;
+    COMPARISON_LT = 3;
+    COMPARISON_LE = 4;
+    COMPARISON_GE = 5;
+    COMPARISON_GT = 6;
+  }
+  Comparison comparison = 1;
+
+  oneof value {
+    int32 int32_value = 2;
+    int64 int64_value = 3;
+    float float_value = 4;
+    double double_value = 5;
+    string string_value = 6;
+    int32 enum_value = 7;
   }
 }
 
