@@ -3,6 +3,7 @@ package com.redpup.matchers
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.Empty
 import com.redpup.matchers.proto.*
+import com.redpup.matchers.proto.CollectionMatcher.DistinctElementsMatcher.MatchType
 import com.redpup.matchers.proto.CollectionMatcherKt.distinctElementsMatcher
 import com.redpup.matchers.proto.CombiningMatcher.Combine
 import com.redpup.matchers.proto.ComparisonMatcher.Comparison
@@ -99,7 +100,7 @@ class MatcherDslTest {
           not { value(0) }
         }
         "string_values" matchesCollection {
-          containsDistinct {
+          containsDistinct(MatchType.MATCH_TYPE_EXACT) {
             matches { startsWith("prefix_") }
             matches { anyOf("match_a", "match_b") }
           }
@@ -131,6 +132,7 @@ class MatcherDslTest {
           matcher = matcher {
             collectionMatcher = collectionMatcher {
               containsElements = distinctElementsMatcher {
+                matchType = MatchType.MATCH_TYPE_EXACT
                 matchers += matcher { stringMatcher = stringMatcher { startsWith = "prefix_" } }
                 matchers += matcher {
                   valueInSetMatcher = valueInSetMatcher {
