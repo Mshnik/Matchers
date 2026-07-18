@@ -320,35 +320,6 @@ fun TypedMatcherBuilder<String>.contains(
 fun TypedMatcherBuilder<String>.matchesRegex(patternString: String): Matcher.Builder =
   delegate.setStringMatcher(stringMatcher { pattern = patternString })
 
-// --- Enum / Extensible Type Allocations ---
-@JvmName("greaterThanEnum")
-fun <E : EnumLite> TypedMatcherBuilder<E>.greaterThan(target: E): Matcher.Builder =
-  delegate.setComparisonMatcher(comparisonMatcher {
-    comparison = Comparison.COMPARISON_GT
-    enumValue = target.number
-  })
-
-@JvmName("greaterThanOrEqualEnum")
-fun <E : EnumLite> TypedMatcherBuilder<E>.greaterThanOrEqual(target: E): Matcher.Builder =
-  delegate.setComparisonMatcher(comparisonMatcher {
-    comparison = Comparison.COMPARISON_GE
-    enumValue = target.number
-  })
-
-@JvmName("lessThanEnum")
-fun <E : EnumLite> TypedMatcherBuilder<E>.lessThan(target: E): Matcher.Builder =
-  delegate.setComparisonMatcher(comparisonMatcher {
-    comparison = Comparison.COMPARISON_LT
-    enumValue = target.number
-  })
-
-@JvmName("lessThanOrEqualEnum")
-fun <E : EnumLite> TypedMatcherBuilder<E>.lessThanOrEqual(target: E): Matcher.Builder =
-  delegate.setComparisonMatcher(comparisonMatcher {
-    comparison = Comparison.COMPARISON_LE
-    enumValue = target.number
-  })
-
 // --- Generic Constant Fallback ---
 fun <T> TypedMatcherBuilder<T>.always(value: Boolean): Matcher.Builder =
   delegate.setConstantMatcher(value)

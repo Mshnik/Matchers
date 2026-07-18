@@ -22,10 +22,6 @@ internal class KValueMatcher<in T : Any>(
       val valueMatcher = proto.valueMatcher
       val case = valueMatcher.valueCase
       val matcher: KMatcher<*> = when {
-        EnumLite::class.java.isAssignableFrom(expectedClass.java)
-          && case == ValueCase.ENUM_VALUE ->
-          KValueMatcher(Int::class, proto, valueMatcher.enumValue).transform<EnumLite> { it.number }
-
         expectedClass == Boolean::class && case == ValueCase.BOOL_VALUE ->
           KValueMatcher(
             Boolean::class, proto, valueMatcher.boolValue

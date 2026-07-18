@@ -48,19 +48,4 @@ class KValueInSetMatcherTest {
     assertTrue(matcher.match("B"))
     assertFalse(matcher.match("C"))
   }
-
-  @Test
-  fun `EnumValueInSetMatcher maps and evaluates set membership for TestEnum`() {
-    // Map the int32 internal backing set to evaluate enum numbers
-    val enumSet =
-      ValueInSetMatcher.Int32ValueSet.newBuilder().addAllValues(listOf(1, 2)).build()
-    val proto = Matcher.newBuilder()
-      .setValueInSetMatcher(ValueInSetMatcher.newBuilder().setEnumValues(enumSet))
-      .build()
-    val matcher = KMatcher.compile<TestEnum>(proto)
-
-    assertTrue(matcher.match(TestEnum.TEST_ENUM_1))
-    assertTrue(matcher.match(TestEnum.TEST_ENUM_2))
-    assertFalse(matcher.match(TestEnum.TEST_ENUM_DEFAULT))
-  }
 }

@@ -162,29 +162,6 @@ class KComparisonMatcherTest {
           "gamma",
           true
         ) { it.stringValue = "beta" },
-
-        // --- Enum Underlying Value Checks ---
-        ComparisonTestCase(
-          TestEnum::class,
-          Comparison.COMPARISON_EQ,
-          TestEnum.TEST_ENUM_1,
-          TestEnum.TEST_ENUM_1,
-          true
-        ) { it.enumValue = 1 },
-        ComparisonTestCase(
-          TestEnum::class,
-          Comparison.COMPARISON_GT,
-          TestEnum.TEST_ENUM_1,
-          TestEnum.TEST_ENUM_2,
-          true
-        ) { it.enumValue = 1 }, // 2 > 1
-        ComparisonTestCase(
-          TestEnum::class,
-          Comparison.COMPARISON_LT,
-          TestEnum.TEST_ENUM_2,
-          TestEnum.TEST_ENUM_1,
-          true
-        ) { it.enumValue = 2 }  // 1 < 2
       )
 
       return testCases.map { case ->

@@ -1,6 +1,5 @@
 package com.redpup.matchers.impl
 
-import com.google.protobuf.Internal.EnumLite
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.ValueInSetMatcher.ValuesCase
@@ -22,13 +21,6 @@ internal class KValueInSetMatcher<in T : Any>(
       val case = valueInSetMatcher.valuesCase
 
       val matcher: KMatcher<*> = when {
-        EnumLite::class.java.isAssignableFrom(expectedClass.java)
-          && case == ValuesCase.ENUM_VALUES -> KValueInSetMatcher(
-          Int::class,
-          proto,
-          valueInSetMatcher.enumValues.valuesList.toSet()
-        ).transform<EnumLite> { it.number }
-
         expectedClass == Int::class && case == ValuesCase.INT32_VALUES ->
           KValueInSetMatcher(Int::class, proto, valueInSetMatcher.int32Values.valuesList.toSet())
 

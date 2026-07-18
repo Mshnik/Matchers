@@ -3,7 +3,6 @@ package com.redpup.matchers.impl
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.Matcher
 import com.redpup.matchers.proto.ValueMatcher
-import com.redpup.matchers.testing.proto.TestEnum
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -52,16 +51,5 @@ class KValueMatcherTest {
 
     assertTrue(matcher.match(true))
     assertFalse(matcher.match(false))
-  }
-
-  @Test
-  fun `EnumValueMatcher extracts numbers using real TestEnum instances`() {
-    val proto = Matcher.newBuilder()
-      .setValueMatcher(ValueMatcher.newBuilder().setEnumValue(2))
-      .build()
-    val matcher = KMatcher.compile<TestEnum>(proto)
-
-    assertTrue(matcher.match(TestEnum.TEST_ENUM_2))
-    assertFalse(matcher.match(TestEnum.TEST_ENUM_1))
   }
 }

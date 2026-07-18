@@ -1,6 +1,5 @@
 package com.redpup.matchers.impl
 
-import com.google.protobuf.Internal
 import com.redpup.matchers.KMatcher
 import com.redpup.matchers.proto.ComparisonMatcher.Comparison
 import com.redpup.matchers.proto.ComparisonMatcher.ValueCase
@@ -26,14 +25,6 @@ internal class KComparisonMatcher<in T : Comparable<T>>(
       val comparison = comparisonMatcher.comparison
 
       val matcher: KMatcher<*> = when {
-        Internal.EnumLite::class.java.isAssignableFrom(expectedClass.java)
-          && case == ValueCase.ENUM_VALUE -> KComparisonMatcher(
-          Int::class,
-          proto,
-          comparison,
-          comparisonMatcher.enumValue
-        ).transform<Internal.EnumLite> { it.number }
-
         expectedClass == Int::class && case == ValueCase.INT32_VALUE ->
           KComparisonMatcher(Int::class, proto, comparison, comparisonMatcher.int32Value)
 
