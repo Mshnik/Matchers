@@ -16,11 +16,12 @@ message Matcher {
     ValueInSetMatcher value_in_set_matcher = 3;
     ComparisonMatcher comparison_matcher = 4;
     StringMatcher string_matcher = 5;
-    MessageMatcher message_matcher = 6;
+    EnumMatcher enum_matcher = 6;
+    MessageMatcher message_matcher = 7;
 
-    Matcher not_matcher = 7;
-    CollectionMatcher collection_matcher = 8;
-    CombiningMatcher combining_matcher = 9;
+    Matcher not_matcher = 8;
+    CollectionMatcher collection_matcher = 9;
+    CombiningMatcher combining_matcher = 10;
   }
 }
 
@@ -102,10 +103,25 @@ message StringMatcher {
   }
 }
 
+// A Matcher on an enum input, either a proto enum or native java/kotlin enum.
+message EnumMatcher {
+  // The full name of the enum. Optional - if not set, enums are matched without
+  // validating the enum type.
+  string enum_type_name = 1;
+
+  oneof matcher {
+    // Matches based on the enum's number (in proto) or ordinal
+    // (in java/kotlin).
+    Matcher number_matcher = 2;
+    // Matches based on the enum's name.
+    Matcher name_matcher = 3;
+  }
+}
+
 // A Matcher on a proto message input.
 message MessageMatcher {
-  // The full name of the message.
-  string message_name = 1;
+  // The full name of the message. Required.
+  string message_type_name = 1;
 
   // A matcher on a specific field in the message.
   // At least one of field_number and field_name must be populated.

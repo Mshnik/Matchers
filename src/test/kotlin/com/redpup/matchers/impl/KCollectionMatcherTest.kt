@@ -223,7 +223,7 @@ class KCollectionMatcherTest {
           matchType = MatchType.MATCH_TYPE_SUPERSET_ELEMENTS
           matchers += matcher {
             messageMatcher = messageMatcher {
-              messageName = TestMessage.getDescriptor().fullName
+              messageTypeName = TestMessage.getDescriptor().fullName
               fields += fieldMatcher {
                 fieldNumber = TestMessage.STRING_VALUE_FIELD_NUMBER
                 matcher = matcher {

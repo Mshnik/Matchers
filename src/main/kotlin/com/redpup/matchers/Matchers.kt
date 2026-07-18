@@ -399,7 +399,7 @@ class MessageMatcherBuilder @PublishedApi internal constructor(
   @PublishedApi internal val descriptor: Descriptor,
 ) {
   @PublishedApi internal val builder: MessageMatcher.Builder =
-    MessageMatcher.newBuilder().setMessageName(descriptor.fullName)
+    MessageMatcher.newBuilder().setMessageTypeName(descriptor.fullName)
 
   companion object {
     inline fun build(

@@ -1,5 +1,7 @@
 package com.redpup.matchers
 
+import com.google.protobuf.Descriptors.EnumDescriptor
+import com.google.protobuf.Internal.EnumLite
 import com.google.protobuf.Message
 import com.redpup.matchers.impl.*
 import com.redpup.matchers.proto.Matcher
@@ -80,6 +82,18 @@ abstract class KMatcher<in T : Any>(
           }
           @Suppress("UNCHECKED_CAST") // Safe after above validation.
           KStringMatcher.compile(matcher) as KMatcher<T>
+        }
+
+        MatcherCase.ENUM_MATCHER -> {
+          check(
+            expectedType isSubclassOf Enum::class
+              || expectedType isSubclassOf EnumLite::class
+              || expectedType isSubclassOf EnumDescriptor::class
+          ) {
+            "Expected enum type, found $expectedType"
+          }
+
+          KEnumMatcher.compile(matcher, expectedClass)
         }
 
         MatcherCase.MESSAGE_MATCHER -> {

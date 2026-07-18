@@ -32,25 +32,25 @@ internal sealed class KStringMatcher(proto: Matcher) : KMatcher<String>(String::
 /** Implementation of [com.redpup.matchers.proto.StringMatcher.getValue] */
 private class ValueKStringMatcher(proto: Matcher) : KStringMatcher(proto) {
   override fun matchTyped(value: String): Boolean =
-    proto.stringMatcher.value.equals(value, ignoreCase)
+    value.equals(proto.stringMatcher.value, ignoreCase)
 }
 
 /** Implementation of [com.redpup.matchers.proto.StringMatcher.getStartsWith] */
 private class StartsWithKStringMatcher(proto: Matcher) : KStringMatcher(proto) {
   override fun matchTyped(value: String): Boolean =
-    proto.stringMatcher.startsWith.startsWith(value, ignoreCase)
+    value.startsWith(proto.stringMatcher.startsWith, ignoreCase)
 }
 
 /** Implementation of [com.redpup.matchers.proto.StringMatcher.getEndsWith] */
 private class EndsWithKStringMatcher(proto: Matcher) : KStringMatcher(proto) {
   override fun matchTyped(value: String): Boolean =
-    proto.stringMatcher.endsWith.endsWith(value, ignoreCase)
+    value.endsWith(proto.stringMatcher.endsWith, ignoreCase)
 }
 
 /** Implementation of [com.redpup.matchers.proto.StringMatcher.getContains] */
 private class ContainsKStringMatcher(proto: Matcher) : KStringMatcher(proto) {
   override fun matchTyped(value: String): Boolean =
-    proto.stringMatcher.contains.contains(value, ignoreCase)
+    value.contains(proto.stringMatcher.contains, ignoreCase)
 }
 
 /** Implementation of [com.redpup.matchers.proto.StringMatcher.getPattern] */

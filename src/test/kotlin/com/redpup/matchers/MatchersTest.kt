@@ -110,7 +110,7 @@ class MatcherDslTest {
 
     val nativeProtoBuilt = matcher {
       messageMatcher = messageMatcher {
-        messageName = "com.redpup.matchers.testing.TestMessage"
+        messageTypeName = "com.redpup.matchers.testing.TestMessage"
 
         fields += fieldMatcher {
           fieldNumber = 6
@@ -161,7 +161,7 @@ class MatcherDslTest {
 
     val nativeProtoBuilt = matcher {
       messageMatcher = messageMatcher {
-        messageName = "com.redpup.matchers.testing.TestMessage"
+        messageTypeName = "com.redpup.matchers.testing.TestMessage"
 
         fields += fieldMatcher {
           fieldNumber = 2
@@ -191,14 +191,14 @@ class MatcherDslTest {
 
     val nativeProtoBuilt = matcher {
       messageMatcher = messageMatcher {
-        messageName = "com.redpup.matchers.testing.TestMessage"
+        messageTypeName = "com.redpup.matchers.testing.TestMessage"
 
         fields += fieldMatcher {
           fieldNumber = 8
           fieldName = "message_value"
           matcher = matcher {
             messageMatcher = messageMatcher {
-              messageName = "com.redpup.matchers.testing.TestMessage"
+              messageTypeName = "com.redpup.matchers.testing.TestMessage"
               fields += fieldMatcher {
                 fieldNumber = 1
                 fieldName = "bool_value"
@@ -224,7 +224,7 @@ class MatcherDslTest {
 
     val nativeProtoBuilt = matcher {
       messageMatcher = messageMatcher {
-        messageName = "com.redpup.matchers.testing.TestMessage"
+        messageTypeName = "com.redpup.matchers.testing.TestMessage"
         fields += fieldMatcher {
           fieldNumber = 2
           fieldName = "int32_value"

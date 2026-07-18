@@ -1,53 +1,90 @@
 package com.redpup.matchers.impl
 
+import com.google.common.truth.Truth.assertThat
 import com.redpup.matchers.KMatcher
-import com.redpup.matchers.proto.Matcher
-import com.redpup.matchers.proto.StringMatcher
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import com.redpup.matchers.proto.StringMatcher.CaseSensitivity
+import com.redpup.matchers.proto.matcher
+import com.redpup.matchers.proto.stringMatcher
 import org.junit.jupiter.api.Test
 
 class KStringMatcherTest {
 
   @Test
   fun `ValueStringMatcher respects case sensitivity rules`() {
-    val sensitiveProto = Matcher.newBuilder().setStringMatcher(
-      StringMatcher.newBuilder().setValue("Kotlin")
-        .setCaseSensitive(StringMatcher.CaseSensitivity.CASE_SENSITIVE)
-    ).build()
+    val sensitiveProto = matcher {
+      stringMatcher = stringMatcher {
+        value = "Kotlin"
+        caseSensitive = CaseSensitivity.CASE_SENSITIVE
+      }
+    }
 
-    val insensitiveProto = Matcher.newBuilder().setStringMatcher(
-      StringMatcher.newBuilder().setValue("Kotlin")
-        .setCaseSensitive(StringMatcher.CaseSensitivity.CASE_INSENSITIVE)
-    ).build()
+    val insensitiveProto = matcher {
+      stringMatcher = stringMatcher {
+        value = "Kotlin"
+        caseSensitive = CaseSensitivity.CASE_INSENSITIVE
+      }
+    }
 
-    assertTrue(KMatcher.compile<String>(sensitiveProto).match("Kotlin"))
-    assertFalse(KMatcher.compile<String>(sensitiveProto).match("kotlin"))
+    assertThat(KMatcher.compile<String>(sensitiveProto).match("Kotlin")).isTrue()
+    assertThat(KMatcher.compile<String>(sensitiveProto).match("kotlin")).isFalse()
 
-    assertTrue(KMatcher.compile<String>(insensitiveProto).match("kotlin"))
-    assertTrue(KMatcher.compile<String>(insensitiveProto).match("KOTLIN"))
+    assertThat(KMatcher.compile<String>(insensitiveProto).match("kotlin")).isTrue()
+    assertThat(KMatcher.compile<String>(insensitiveProto).match("KOTLIN")).isTrue()
   }
 
   @Test
   fun `StartsWithStringMatcher asserts conditions based on current inversion design`() {
-    val proto = Matcher.newBuilder().setStringMatcher(
-      StringMatcher.newBuilder().setStartsWith("Framework")
-        .setCaseSensitive(StringMatcher.CaseSensitivity.CASE_SENSITIVE)
-    ).build()
+    val proto = matcher {
+      stringMatcher = stringMatcher {
+        startsWith = "Hi"
+        caseSensitive = CaseSensitivity.CASE_SENSITIVE
+      }
+    }
     val matcher = KMatcher.compile<String>(proto)
 
-    assertTrue(matcher.match("Frame"))
-    assertFalse(matcher.match("Work"))
+    assertThat(matcher.match("Hi There")).isTrue()
+    assertThat(matcher.match("There Hi")).isFalse()
+  }
+
+  @Test
+  fun `EndsWithStringMatcher asserts conditions based on current inversion design`() {
+    val proto = matcher {
+      stringMatcher = stringMatcher {
+        endsWith = "There"
+        caseSensitive = CaseSensitivity.CASE_SENSITIVE
+      }
+    }
+    val matcher = KMatcher.compile<String>(proto)
+
+    assertThat(matcher.match("Hi There")).isTrue()
+    assertThat(matcher.match("There Hi")).isFalse()
+  }
+
+  @Test
+  fun `ContainsStringMatcher asserts conditions based on current inversion design`() {
+    val proto = matcher {
+      stringMatcher = stringMatcher {
+        contains = "There"
+        caseSensitive = CaseSensitivity.CASE_SENSITIVE
+      }
+    }
+    val matcher = KMatcher.compile<String>(proto)
+
+    assertThat(matcher.match("Hi There")).isTrue()
+    assertThat(matcher.match("There Hi")).isTrue()
+    assertThat(matcher.match("Hi Hi")).isFalse()
   }
 
   @Test
   fun `PatternStringMatcher matches standard regular expression definitions`() {
-    val proto = Matcher.newBuilder().setStringMatcher(
-      StringMatcher.newBuilder().setPattern("^[A-Z]+$")
-    ).build()
+    val proto = matcher {
+      stringMatcher = stringMatcher {
+        pattern = "^[A-Z]+$"
+      }
+    }
     val matcher = KMatcher.compile<String>(proto)
 
-    assertTrue(matcher.match("ABC"))
-    assertFalse(matcher.match("abc"))
+    assertThat(matcher.match("ABC")).isTrue()
+    assertThat(matcher.match("abc")).isFalse()
   }
 }

@@ -24,18 +24,17 @@ internal object KTypes {
     // Extract the raw class classifier (e.g., String, Int, or custom classes)
     val rawClass = this.classifier as? KClass<*> ?: return false
 
-    // Fast-path check: If it doesn't even implement Comparable at a raw Java level, exit early.
-    if (!Comparable::class.java.isAssignableFrom(rawClass.java)) {
+    // FIX: Use .javaObjectType instead of .java to ensure primitives (like int)
+    // are checked via their boxed wrapper counterparts (like java.lang.Integer).
+    if (!Comparable::class.java.isAssignableFrom(rawClass.javaObjectType)) {
       return false
     }
 
-    // Scan all supertypes in Kotlin's reflection model to find the specific Comparable
-    // instantiation
+    // Scan all supertypes in Kotlin's reflection model to find the specific Comparable instantiation
     val comparableSupertype = (rawClass.allSupertypes + rawClass.starProjectedType)
       .firstOrNull { it.classifier == Comparable::class } ?: return false
 
     // Inspect the generic argument of Comparable<T>
-    // comparableSupertype.arguments[0] represents the 'T' in Comparable<T>
     val genericArgumentType = comparableSupertype.arguments.firstOrNull()?.type ?: return false
 
     // Verify that the generic argument matches the original raw class type

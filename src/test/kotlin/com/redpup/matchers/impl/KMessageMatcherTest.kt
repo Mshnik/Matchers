@@ -16,7 +16,7 @@ class KMessageMatcherTest {
   fun `SINGLE_FIELD matches valid singular field properties`() {
     val proto = matcher {
       messageMatcher = messageMatcher {
-        messageName = "com.redpup.matchers.testing.TestMessage"
+        messageTypeName = "com.redpup.matchers.testing.TestMessage"
         fields += fieldMatcher {
           fieldNumber = 2 // int32_value
           matcher = matcher {
@@ -38,7 +38,7 @@ class KMessageMatcherTest {
   fun `REPEATED_FIELD matches if at least one list item passes the condition`() {
     val proto = matcher {
       messageMatcher = messageMatcher {
-        messageName = "com.redpup.matchers.testing.TestMessage"
+        messageTypeName = "com.redpup.matchers.testing.TestMessage"
         fields += fieldMatcher {
           fieldName = "int32_values"
           matcher = matcher {
