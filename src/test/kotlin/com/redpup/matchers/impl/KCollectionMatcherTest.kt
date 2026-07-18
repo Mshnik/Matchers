@@ -2,6 +2,7 @@ package com.redpup.matchers.impl
 
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.empty
+import com.redpup.matchers.proto.CollectionMatcher.DistinctElementsMatcher.MatchType
 import com.redpup.matchers.proto.CollectionMatcherKt.distinctElementsMatcher
 import com.redpup.matchers.proto.MessageMatcherKt.fieldMatcher
 import com.redpup.matchers.proto.collectionMatcher
@@ -77,6 +78,7 @@ class KCollectionMatcherTest {
 
     assertThat(matcher.matchTyped(setOf("allowed", "safe"))).isTrue()
     assertThat(matcher.matchTyped(setOf("allowed", "forbidden"))).isFalse()
+    assertThat(emptySet<String>()).isEmpty()
     assertThat(matcher.matchTyped(emptySet())).isTrue()
   }
 
@@ -116,36 +118,82 @@ class KCollectionMatcherTest {
   }
 
   @Test
-  fun `CONTAINS_ELEMENTS enforces 1-to-1 matching for multiple conditions using complex types`() {
-    // We want a collection containing unique TestMessages where one has int32_value=10 and another has int32_value=20
+  fun `CONTAINS_ELEMENTS enforces MATCH_TYPE_SUPERSET_ELELEMTS 1-to-1 matching for multiple conditions using complex types`() {
     val proto = matcher {
       collectionMatcher = collectionMatcher {
         containsElements = distinctElementsMatcher {
-          matchers += matcher {
-            valueMatcher = valueMatcher { int32Value = 10 }
-          }
-          matchers += matcher {
-            valueMatcher = valueMatcher { int32Value = 20 }
-          }
+          matchType = MatchType.MATCH_TYPE_SUPERSET_ELEMENTS
+          matchers += matcher { valueMatcher = valueMatcher { int32Value = 10 } }
+          matchers += matcher { valueMatcher = valueMatcher { int32Value = 20 } }
         }
       }
     }
 
-    // Since our sub-matchers look for exact Ints, compile against a List of Ints for easy validation
     val matcher =
       KCollectionMatcher.compile<Int, List<Int>>(proto, List::class, typeOf<List<Int>>())
 
     // Perfect unique assignment
     assertThat(matcher.matchTyped(listOf(10, 20))).isTrue()
-    // Trailing unmatched elements are fine
+    // Trailing unmatched elements are fine in SUPERSET_ELEMENTS mode
     assertThat(matcher.matchTyped(listOf(0, 20, 10))).isTrue()
-    // Order-independence and backtracking verification
+    // Order-independence
     assertThat(matcher.matchTyped(listOf(20, 10))).isTrue()
 
-    // Fails because '10' cannot satisfy both requested matcher nodes uniquely
     assertThat(matcher.matchTyped(listOf(10, 0))).isFalse()
-    // Fails because '20' is present but '10' is completely missing
     assertThat(matcher.matchTyped(listOf(20, 20))).isFalse()
+  }
+
+  @Test
+  fun `CONTAINS_ELEMENTS enforces MATCH_TYPE_EXACT 1-to-1 mapping constraints`() {
+    val proto = matcher {
+      collectionMatcher = collectionMatcher {
+        containsElements = distinctElementsMatcher {
+          matchType = MatchType.MATCH_TYPE_EXACT
+          matchers += matcher { valueMatcher = valueMatcher { int32Value = 10 } }
+          matchers += matcher { valueMatcher = valueMatcher { int32Value = 20 } }
+        }
+      }
+    }
+
+    val matcher =
+      KCollectionMatcher.compile<Int, List<Int>>(proto, List::class, typeOf<List<Int>>())
+
+    // Matches if exact 1:1 mapping is fulfilled
+    assertThat(matcher.matchTyped(listOf(10, 20))).isTrue()
+    assertThat(matcher.matchTyped(listOf(20, 10))).isTrue()
+
+    // Fails because extra elements exist, breaching exact count criteria
+    assertThat(matcher.matchTyped(listOf(10, 20, 30))).isFalse()
+    // Fails because count is lower than required matchers
+    assertThat(matcher.matchTyped(listOf(10))).isFalse()
+  }
+
+  @Test
+  fun `CONTAINS_ELEMENTS enforces MATCH_TYPE_SUPERSET_MATCHERS allowing excess matchers`() {
+    val proto = matcher {
+      collectionMatcher = collectionMatcher {
+        containsElements = distinctElementsMatcher {
+          matchType = MatchType.MATCH_TYPE_SUPERSET_MATCHERS
+          matchers += matcher { valueMatcher = valueMatcher { int32Value = 10 } }
+          matchers += matcher { valueMatcher = valueMatcher { int32Value = 20 } }
+          matchers += matcher { valueMatcher = valueMatcher { int32Value = 30 } }
+        }
+      }
+    }
+
+    val matcher =
+      KCollectionMatcher.compile<Int, List<Int>>(proto, List::class, typeOf<List<Int>>())
+
+    // All elements match a distinct matcher node; excess matchers are ignored
+    assertThat(matcher.matchTyped(listOf(10, 30))).isTrue()
+    assertThat(matcher.matchTyped(listOf(20))).isTrue()
+    assertThat(matcher.matchTyped(listOf(30, 20, 10))).isTrue()
+    assertThat(matcher.matchTyped(emptyList())).isTrue()
+
+    // Fails because an element does not fulfill any unique remaining matcher node
+    assertThat(matcher.matchTyped(listOf(10, 42))).isFalse()
+    // Fails because there are more elements than matchers
+    assertThat(matcher.matchTyped(listOf(10, 20, 30, 40))).isFalse()
   }
 
   @Test
@@ -153,6 +201,7 @@ class KCollectionMatcherTest {
     val proto = matcher {
       collectionMatcher = collectionMatcher {
         containsElements = distinctElementsMatcher {
+          matchType = MatchType.MATCH_TYPE_SUPERSET_ELEMENTS
           matchers += matcher { valueMatcher = valueMatcher { int32Value = 1 } }
           matchers += matcher { valueMatcher = valueMatcher { int32Value = 2 } }
           matchers += matcher { valueMatcher = valueMatcher { int32Value = 3 } }
@@ -163,8 +212,6 @@ class KCollectionMatcherTest {
     val matcher =
       KCollectionMatcher.compile<Int, List<Int>>(proto, List::class, typeOf<List<Int>>())
 
-    // Collection only has 2 elements but 3 are demanded.
-    // Triggers size check before ever invoking expensive sub-matcher tracks.
     assertThat(matcher.matchTyped(listOf(1, 2))).isFalse()
   }
 
@@ -173,6 +220,7 @@ class KCollectionMatcherTest {
     val proto = matcher {
       collectionMatcher = collectionMatcher {
         containsElements = distinctElementsMatcher {
+          matchType = MatchType.MATCH_TYPE_SUPERSET_ELEMENTS
           matchers += matcher {
             messageMatcher = messageMatcher {
               messageName = TestMessage.getDescriptor().fullName
@@ -206,7 +254,6 @@ class KCollectionMatcherTest {
   @Test
   fun `Compilation crashes cleanly if collection configuration details are missing`() {
     val invalidProto = matcher {
-      // Intentionally omitting the inner oneof assignment strategy
       collectionMatcher = collectionMatcher {}
     }
 

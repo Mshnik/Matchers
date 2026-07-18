@@ -145,7 +145,24 @@ message CollectionMatcher {
   }
 
   message DistinctElementsMatcher {
-    repeated Matcher matchers = 1;
+    enum MatchType {
+      MATCH_TYPE_UNKNOWN = 0;
+
+      // Every matcher matches a unique element. Elements can be left over.
+      // (e.g. elements >= matchers)
+      MATCH_TYPE_SUPERSET_ELEMENTS = 1;
+
+      // Exact 1:1 pairing. Every matcher matches a unique element and no elements are left over.
+      // (e.g. elements == matchers)
+      MATCH_TYPE_EXACT = 2;
+
+      // Every element matches a unique matcher. Matchers can be left over.
+      // (e.g. elements <= matchers)
+      MATCH_TYPE_SUPERSET_MATCHERS = 3;
+    }
+
+    MatchType match_type = 1;
+    repeated Matcher matchers = 2;
   }
 }
 
