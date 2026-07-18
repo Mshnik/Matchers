@@ -529,12 +529,8 @@ class TypedCollectionMatcherBuilder<E> @PublishedApi internal constructor(
     target.size = Matcher.newBuilder().apply { TypedMatcherBuilder<Int>(this).block() }.build()
   }
 
-  /**
-   * Enforces 1-to-1 matching across elements using the specified [MatchType].
-   * Defaults to [MatchType.MATCH_TYPE_SUPERSET_ELEMENTS] for complete backwards compatibility.
-   */
   inline fun containsDistinct(
-    matchType: MatchType = MatchType.MATCH_TYPE_SUPERSET_ELEMENTS,
+    matchType: MatchType,
     crossinline block: TypedCombiningMatcherBuilder<E>.() -> Unit,
   ) {
     target.containsElements = distinctElementsMatcher {
