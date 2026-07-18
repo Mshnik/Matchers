@@ -3,7 +3,6 @@ package com.redpup.matchers
 import com.google.protobuf.Descriptors.Descriptor
 import com.google.protobuf.Descriptors.FieldDescriptor
 import com.google.protobuf.Empty
-import com.google.protobuf.Internal.EnumLite
 import com.redpup.matchers.proto.*
 import com.redpup.matchers.proto.CollectionMatcher.DistinctElementsMatcher.MatchType
 import com.redpup.matchers.proto.CollectionMatcherKt.distinctElementsMatcher
@@ -359,6 +358,51 @@ inline fun <E> TypedMatcherBuilder<out Collection<E>>.collectionMatcher(
   delegate.setCollectionMatcher(protoCollectionBuilder.build())
   return this
 }
+
+// ============================================================================
+// Type-Locked Enum Allocations
+// ============================================================================
+
+/**
+ * Evaluates an Enum target structurally by matching its numeric position sequence.
+ *
+ * For Proto enums, this represents the compiled tag number; for standard Kotlin
+ * enums, this will match against the element's direct zero-indexed ordinal.
+ */
+@JvmName("enumByNumber")
+inline fun <E : Any> TypedMatcherBuilder<E>.enumNumber(
+  enumTypeName: String? = null,
+  crossinline block: TypedMatcherBuilder<Int>.() -> Unit,
+): Matcher.Builder = delegate.setEnumMatcher(enumMatcher {
+  if (!enumTypeName.isNullOrEmpty()) {
+    this.enumTypeName = enumTypeName
+  }
+  this.numberMatcher = Matcher.newBuilder().apply { TypedMatcherBuilder<Int>(this).block() }.build()
+})
+
+/**
+ * Evaluates an Enum target structurally by matching its string identifier name.
+ */
+@JvmName("enumByName")
+inline fun <E : Any> TypedMatcherBuilder<E>.enumName(
+  enumTypeName: String? = null,
+  crossinline block: TypedMatcherBuilder<String>.() -> Unit,
+): Matcher.Builder = delegate.setEnumMatcher(enumMatcher {
+  if (!enumTypeName.isNullOrEmpty()) {
+    this.enumTypeName = enumTypeName
+  }
+  this.nameMatcher =
+    Matcher.newBuilder().apply { TypedMatcherBuilder<String>(this).block() }.build()
+})
+
+/**
+ * Shorthand for asserting that an Enum field matches a single, specific expected string identifier.
+ */
+@JvmName("enumValueByName")
+fun <E : Any> TypedMatcherBuilder<E>.enumValue(
+  expectedName: String,
+  enumTypeName: String? = null,
+): Matcher.Builder = enumName(enumTypeName) { value(expectedName) }
 
 // ============================================================================
 // 4. Scoped Message Matcher Builder (Descriptor Routing Engine)

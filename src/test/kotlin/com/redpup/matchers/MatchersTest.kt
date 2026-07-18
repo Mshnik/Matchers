@@ -213,6 +213,63 @@ class MatcherDslTest {
     assertThat(dslBuilt).isEqualTo(nativeProtoBuilt)
   }
 
+  enum class Status {
+    UNKNOWN, ACTIVE, INACTIVE
+  }
+
+  @Test
+  fun `enumName factory correctly populates structural name matcher proto`() {
+    val proto = typedMatcher<Status> {
+      enumName(enumTypeName = "com.redpup.matchers.Status") {
+        startsWith("ACT")
+      }
+    }
+
+    assertThat(proto.hasEnumMatcher()).isTrue()
+
+    val enumMatcher = proto.enumMatcher
+    assertThat(enumMatcher.enumTypeName).isEqualTo("com.redpup.matchers.Status")
+    assertThat(enumMatcher.hasNameMatcher()).isTrue()
+
+    val innerStringMatcher = enumMatcher.nameMatcher.stringMatcher
+    assertThat(innerStringMatcher.startsWith).isEqualTo("ACT")
+  }
+
+  @Test
+  fun `enumNumber factory correctly populates structural ordinal comparison proto`() {
+    val proto = typedMatcher<Status> {
+      enumNumber {
+        greaterThan(0)
+      }
+    }
+
+    assertThat(proto.hasEnumMatcher()).isTrue()
+
+    val enumMatcher = proto.enumMatcher
+    assertThat(enumMatcher.enumTypeName).isEmpty() // Verifies optional handling leaves it empty
+    assertThat(enumMatcher.hasNumberMatcher()).isTrue()
+
+    val innerComparisonMatcher = enumMatcher.numberMatcher.comparisonMatcher
+    assertThat(innerComparisonMatcher.comparison).isEqualTo(Comparison.COMPARISON_GT)
+    assertThat(innerComparisonMatcher.int32Value).isEqualTo(0)
+  }
+
+  @Test
+  fun `enumValue shorthand factory correctly populates exact string value match proto`() {
+    val proto = typedMatcher<Status> {
+      enumValue("ACTIVE", enumTypeName = "com.redpup.matchers.Status")
+    }
+
+    assertThat(proto.hasEnumMatcher()).isTrue()
+
+    val enumMatcher = proto.enumMatcher
+    assertThat(enumMatcher.enumTypeName).isEqualTo("com.redpup.matchers.Status")
+    assertThat(enumMatcher.hasNameMatcher()).isTrue()
+
+    val innerValueMatcher = enumMatcher.nameMatcher.valueMatcher
+    assertThat(innerValueMatcher.stringValue).isEqualTo("ACTIVE")
+  }
+
   @Test
   fun testTypedMessageMatcherEntryPoint() {
     // Verifies the TypedMatcherBuilder context receiver wrapper variant
